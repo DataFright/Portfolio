@@ -8,9 +8,14 @@
   --accent-strong: #8fcbff;
   --ring: #8bc6ff36;
 
-  --radius: 4px;
   --grid-unit: 24px;
   --grid-major-step: calc(var(--grid-unit) * 5);
+  --radius: 0;
+
+  --space-1: calc(var(--grid-unit) * 1);
+  --space-2: calc(var(--grid-unit) * 2);
+  --space-3: calc(var(--grid-unit) * 3);
+  --space-4: calc(var(--grid-unit) * 4);
 
   --page-grid-line: #8ecfff17;
   --page-grid-major: #8ecfff2b;
@@ -53,7 +58,7 @@ body {
     var(--grid-major-step) var(--grid-major-step),
     var(--grid-major-step) var(--grid-major-step),
     100% 100%;
-  background-position: 0 0, 0 0, -1px -1px, -1px -1px, 0 0;
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -71,7 +76,7 @@ body {
     var(--grid-unit) var(--grid-unit),
     var(--grid-major-step) var(--grid-major-step),
     var(--grid-major-step) var(--grid-major-step);
-  background-position: 0 0, 0 0, 0 0, -1px -1px, -1px -1px;
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
   background-attachment: scroll, fixed, fixed, fixed, fixed;
 }
 
@@ -79,54 +84,56 @@ body {
 /* Layout */
 /* -------------------------------------------------------------------------- */
 .page {
-  width: min(1500px, 97vw);
+  width: 100%;
+  max-width: calc(var(--grid-unit) * 56);
   margin: 0 auto;
-  padding: 72px 24px 96px 48px;
+  padding: var(--space-3) var(--space-2) var(--space-4);
 }
 
 .hero {
-  max-width: 980px;
-  margin-bottom: 24px;
+  max-width: calc(var(--grid-unit) * 40);
+  margin-bottom: var(--space-1);
 }
 
 .intro-grid {
   display: grid;
   grid-template-columns: 1.3fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
+  align-items: start;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(336px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--grid-unit) * 14), 1fr));
+  gap: var(--space-1);
 }
 
 .framework {
-  margin-top: 48px;
-  padding: 24px;
+  margin-top: var(--space-2);
+  padding: var(--space-1);
   box-shadow: 0 22px 30px -27px #000000f2;
 }
 
 .framework-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(264px, 1fr));
-  gap: 24px;
-  margin-top: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--grid-unit) * 11), 1fr));
+  gap: var(--space-1);
+  margin-top: var(--space-1);
 }
 
 /* -------------------------------------------------------------------------- */
 /* Typography */
 /* -------------------------------------------------------------------------- */
 h1 {
-  margin: 0.35rem 0;
+  margin: 0 0 var(--space-1);
   font-size: clamp(3rem, 2.1rem + 3.2vw, 5rem);
   line-height: 1.05;
   letter-spacing: 0.01em;
 }
 
 h2 {
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--space-1);
   font-size: 1.14rem;
 }
 
@@ -146,7 +153,7 @@ h2 {
 }
 
 .url {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-1);
   color: var(--muted);
   font-size: 0.92rem;
 }
@@ -155,7 +162,7 @@ h2 {
 /* Intro + contact */
 /* -------------------------------------------------------------------------- */
 .intro-card {
-  padding: 24px;
+  padding: var(--space-1);
   box-shadow: 0 18px 30px -24px #000000d9;
   background-image:
     linear-gradient(180deg, var(--panel-intro-top), var(--panel-intro-bottom)),
@@ -166,15 +173,19 @@ h2 {
 }
 
 .intro-card h2 {
-  margin: 0 0 0.45rem;
+  margin: 0 0 var(--space-1);
   font-size: 1.15rem;
 }
 
 .intro-card p {
-  margin: 0.45rem 0 0;
+  margin: 0;
   color: #e0efff;
   font-size: 1.04rem;
   line-height: 1.45;
+}
+
+.intro-card p + p {
+  margin-top: var(--space-1);
 }
 
 .intro-line {
@@ -183,21 +194,21 @@ h2 {
 }
 
 .contact-list {
-  margin: 0.2rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .contact-list li {
   display: grid;
-  grid-template-columns: 84px 1fr;
-  gap: 0.5rem;
+  grid-template-columns: calc(var(--grid-unit) * 3) 1fr;
+  gap: var(--space-1);
   align-items: baseline;
-  padding: 12px 0;
+  padding: 0;
 }
 
-.contact-list li:first-child {
-  padding-top: 0.2rem;
+.contact-list li + li {
+  margin-top: var(--space-1);
 }
 
 .contact-list span {
@@ -231,11 +242,10 @@ h2 {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  transition: box-shadow 220ms ease;
 }
 
 .card:hover {
-  transform: translateY(-4px);
   box-shadow: 0 24px 36px -22px #000000;
 }
 
@@ -253,18 +263,18 @@ h2 {
 }
 
 .card-body {
-  padding: 24px;
+  padding: var(--space-1);
 }
 
 .chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space-1);
 }
 
 .type-pill {
   display: inline-block;
-  margin: 0 0 12px;
+  margin: 0;
   padding: 0.22rem 0.58rem;
   border-radius: 999px;
   border: 1px solid #8fcbff40;
@@ -282,8 +292,8 @@ h2 {
 .meta-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  margin-bottom: 12px;
+  gap: var(--space-1);
+  margin: var(--space-1) 0;
 }
 
 .action {
@@ -303,14 +313,14 @@ h2 {
 
 .detail,
 .detail.open {
-  padding-top: 12px;
+  padding-top: var(--space-1);
   opacity: 1;
   max-height: none;
   overflow: visible;
 }
 
 .detail h3 {
-  margin: 0.7rem 0 0.2rem;
+  margin: var(--space-1) 0;
   font-size: 1rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -325,7 +335,7 @@ h2 {
 }
 
 .detail ul {
-  margin: 0.2rem 0 0;
+  margin: 0;
   padding-left: 1rem;
   color: #e3f0ff;
   font-size: 1.01rem;
@@ -333,7 +343,7 @@ h2 {
 }
 
 .detail li + li {
-  margin-top: 0.2rem;
+  margin-top: var(--space-1);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -353,7 +363,7 @@ h2 {
 }
 
 .framework-head h2 {
-  margin: 0.2rem 0 0.45rem;
+  margin: 0 0 var(--space-1);
   font-size: 1.45rem;
 }
 
@@ -364,7 +374,7 @@ h2 {
 }
 
 .framework-card {
-  padding: 24px;
+  padding: var(--space-1);
   background-image:
     linear-gradient(170deg, var(--panel-framework-card-top), var(--panel-framework-card-bottom)),
     linear-gradient(var(--panel-grid-line) 1px, transparent 1px),
@@ -374,7 +384,7 @@ h2 {
 }
 
 .framework-card h3 {
-  margin: 0 0 0.32rem;
+  margin: 0 0 var(--space-1);
   font-size: 1.08rem;
   color: #deefff;
 }
@@ -388,7 +398,7 @@ h2 {
 }
 
 .framework-card li + li {
-  margin-top: 0.2rem;
+  margin-top: var(--space-1);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -405,7 +415,7 @@ h2 {
 @keyframes riseIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(var(--grid-unit));
   }
   to {
     opacity: 1;
@@ -418,7 +428,7 @@ h2 {
 /* -------------------------------------------------------------------------- */
 @media (max-width: 640px) {
   .page {
-    padding: 48px 12px 72px 24px;
+    padding: var(--space-2) var(--space-1) var(--space-3);
   }
 
   .intro-grid {
@@ -426,8 +436,8 @@ h2 {
   }
 
   .framework {
-    margin-top: 24px;
-    padding: 18px;
+    margin-top: var(--space-1);
+    padding: var(--space-1);
   }
 
   .detail p,
