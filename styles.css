@@ -7,6 +7,9 @@
   --accent: #57b0ff;
   --accent-strong: #8fcbff;
   --ring: #8bc6ff36;
+  --grid-line: #8ecfff12;
+  --etch-dark: #0b2b45;
+  --etch-glow: #7bc8ff2c;
   --radius: 18px;
 }
 
@@ -18,7 +21,10 @@ body {
   position: relative;
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(165deg, #030a14 0%, #071629 48%, #0a2238 100%);
+  background:
+    linear-gradient(165deg, #030a14f0 0%, #071629eb 48%, #0a2238ef 100%),
+    repeating-linear-gradient(0deg, transparent 0 23px, var(--grid-line) 23px 24px),
+    repeating-linear-gradient(90deg, transparent 0 23px, var(--grid-line) 23px 24px);
   color: var(--text);
   font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
   overflow-x: hidden;
@@ -114,12 +120,54 @@ body::after {
 .page {
   width: min(1500px, 97vw);
   margin: 0 auto;
-  padding: 3rem 0 4rem;
+  padding: 3rem 0.8rem 4rem 1.4rem;
+  position: relative;
+}
+
+.page::before {
+  content: "";
+  position: absolute;
+  top: 1.3rem;
+  bottom: 2rem;
+  left: 0.4rem;
+  width: 2px;
+  background: linear-gradient(180deg, #7fc5ff3b 0%, #2f6b992d 55%, #7fc5ff30 100%);
+  box-shadow: 0 0 0 1px #0a253c, 0 0 14px #61b6ff1f;
 }
 
 .hero {
   margin-bottom: 2rem;
   max-width: 980px;
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+.hero::before,
+.intro-grid::before,
+.grid::before,
+.framework::before {
+  content: "";
+  position: absolute;
+  left: -0.95rem;
+  top: 1rem;
+  width: 1rem;
+  height: 2px;
+  background: linear-gradient(90deg, #76c0ff66, #76c0ff1a);
+}
+
+.hero::after,
+.intro-grid::after,
+.grid::after,
+.framework::after {
+  content: "";
+  position: absolute;
+  left: -1rem;
+  top: 0.78rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #73bfff91;
+  box-shadow: 0 0 8px #73bfff57;
 }
 
 .eyebrow {
@@ -149,6 +197,8 @@ h1 {
   grid-template-columns: 1.3fr 1fr;
   gap: 1rem;
   margin-bottom: 1.2rem;
+  padding-left: 1.25rem;
+  position: relative;
 }
 
 .intro-card {
@@ -157,6 +207,18 @@ h1 {
   border-radius: 16px;
   padding: 1rem 1.05rem;
   box-shadow: 0 18px 30px -24px #000000d9;
+  position: relative;
+}
+
+.intro-card::before,
+.card::after,
+.framework-card::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid #7bc8ff1b;
+  border-radius: 10px;
+  pointer-events: none;
 }
 
 .intro-card h2 {
@@ -217,12 +279,14 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.1rem;
+  padding-left: 1.25rem;
+  position: relative;
 }
 
 .card {
   border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid var(--ring);
+  background: linear-gradient(175deg, #123652, #102d47);
+  border: 1px solid #7fc5ff33;
   box-shadow: 0 22px 32px -26px #000000db;
   overflow: hidden;
   display: flex;
@@ -384,6 +448,8 @@ h2 {
   background: linear-gradient(155deg, #12314f, #0f2a43);
   border: 1px solid #8bc6ff3d;
   box-shadow: 0 22px 30px -27px #000000f2;
+  position: relative;
+  padding-left: 2.3rem;
 }
 
 .framework-head {
@@ -409,10 +475,11 @@ h2 {
 }
 
 .framework-card {
-  background: var(--surface-soft);
-  border: 1px solid var(--ring);
+  background: linear-gradient(170deg, #163d61, #11314d);
+  border: 1px solid #84c8ff30;
   border-radius: 14px;
   padding: 0.78rem 0.82rem;
+  position: relative;
 }
 
 .framework-card h3 {
