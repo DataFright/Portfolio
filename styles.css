@@ -1,0 +1,474 @@
+:root {
+  --bg: #081a2d;
+  --surface: #12304d;
+  --surface-soft: #173d61;
+  --text: #e9f3ff;
+  --muted: #a8bfd8;
+  --accent: #57b0ff;
+  --accent-strong: #8fcbff;
+  --ring: #8bc6ff36;
+  --radius: 18px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  position: relative;
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(165deg, #030a14 0%, #071629 48%, #0a2238 100%);
+  color: var(--text);
+  font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -80px;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 8% 10%, #5cb8ff2b 0 2.6%, transparent 11%),
+    radial-gradient(circle at 18% 24%, #79c5ff28 0 2.4%, transparent 10.5%),
+    radial-gradient(circle at 32% 8%, #8aceff24 0 2.2%, transparent 10%),
+    radial-gradient(circle at 46% 17%, #4aa8ff27 0 2.5%, transparent 10.8%),
+    radial-gradient(circle at 58% 7%, #9fd8ff22 0 2.1%, transparent 9.9%),
+    radial-gradient(circle at 72% 13%, #66bcff28 0 2.6%, transparent 11%),
+    radial-gradient(circle at 86% 8%, #8aceff22 0 2.4%, transparent 10.4%),
+    radial-gradient(circle at 94% 22%, #66bcff1f 0 2%, transparent 9.5%),
+    radial-gradient(circle at 10% 40%, #8fcbff21 0 2.5%, transparent 10.9%),
+    radial-gradient(circle at 24% 52%, #4ea8ff22 0 2.2%, transparent 10.2%),
+    radial-gradient(circle at 40% 44%, #7ac4ff22 0 2.4%, transparent 10.8%),
+    radial-gradient(circle at 57% 56%, #9fd8ff1d 0 2.3%, transparent 10.7%),
+    radial-gradient(circle at 73% 48%, #4ea8ff22 0 2.5%, transparent 10.9%),
+    radial-gradient(circle at 87% 61%, #8fcbff1d 0 2.1%, transparent 10%),
+    radial-gradient(circle at 6% 76%, #6ec1ff22 0 2.2%, transparent 10.4%),
+    radial-gradient(circle at 20% 84%, #96d3ff1c 0 2.5%, transparent 11.1%),
+    radial-gradient(circle at 36% 76%, #4ea8ff21 0 2.1%, transparent 10.1%),
+    radial-gradient(circle at 52% 90%, #7ac4ff1f 0 2.6%, transparent 11.2%),
+    radial-gradient(circle at 70% 82%, #8fcbff1f 0 2.3%, transparent 10.8%),
+    radial-gradient(circle at 86% 88%, #62bbff1d 0 2.2%, transparent 10.3%),
+    radial-gradient(circle at 95% 74%, #9fd8ff1b 0 2%, transparent 9.6%);
+  filter: blur(18px);
+  opacity: 0.66;
+  pointer-events: none;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: -80px;
+  z-index: -1;
+  pointer-events: none;
+  background: rgba(68, 132, 190, 0.05);
+  -webkit-backdrop-filter: blur(24px) saturate(125%) brightness(0.92);
+  backdrop-filter: blur(24px) saturate(125%) brightness(0.92);
+  -webkit-mask-image:
+    radial-gradient(circle at 8% 10%, #000 0 3%, transparent 11.5%),
+    radial-gradient(circle at 18% 24%, #000 0 2.8%, transparent 11%),
+    radial-gradient(circle at 32% 8%, #000 0 2.6%, transparent 10.5%),
+    radial-gradient(circle at 46% 17%, #000 0 2.9%, transparent 11.2%),
+    radial-gradient(circle at 58% 7%, #000 0 2.4%, transparent 10.4%),
+    radial-gradient(circle at 72% 13%, #000 0 3%, transparent 11.5%),
+    radial-gradient(circle at 86% 8%, #000 0 2.8%, transparent 11%),
+    radial-gradient(circle at 94% 22%, #000 0 2.2%, transparent 9.9%),
+    radial-gradient(circle at 10% 40%, #000 0 2.8%, transparent 11.4%),
+    radial-gradient(circle at 24% 52%, #000 0 2.5%, transparent 10.7%),
+    radial-gradient(circle at 40% 44%, #000 0 2.7%, transparent 11.2%),
+    radial-gradient(circle at 57% 56%, #000 0 2.6%, transparent 11%),
+    radial-gradient(circle at 73% 48%, #000 0 2.8%, transparent 11.3%),
+    radial-gradient(circle at 87% 61%, #000 0 2.4%, transparent 10.4%),
+    radial-gradient(circle at 6% 76%, #000 0 2.5%, transparent 10.8%),
+    radial-gradient(circle at 20% 84%, #000 0 2.8%, transparent 11.5%),
+    radial-gradient(circle at 36% 76%, #000 0 2.4%, transparent 10.4%),
+    radial-gradient(circle at 52% 90%, #000 0 3%, transparent 11.8%),
+    radial-gradient(circle at 70% 82%, #000 0 2.7%, transparent 11.2%),
+    radial-gradient(circle at 86% 88%, #000 0 2.5%, transparent 10.7%),
+    radial-gradient(circle at 95% 74%, #000 0 2.2%, transparent 9.9%);
+  mask-image:
+    radial-gradient(circle at 8% 10%, #000 0 3%, transparent 11.5%),
+    radial-gradient(circle at 18% 24%, #000 0 2.8%, transparent 11%),
+    radial-gradient(circle at 32% 8%, #000 0 2.6%, transparent 10.5%),
+    radial-gradient(circle at 46% 17%, #000 0 2.9%, transparent 11.2%),
+    radial-gradient(circle at 58% 7%, #000 0 2.4%, transparent 10.4%),
+    radial-gradient(circle at 72% 13%, #000 0 3%, transparent 11.5%),
+    radial-gradient(circle at 86% 8%, #000 0 2.8%, transparent 11%),
+    radial-gradient(circle at 94% 22%, #000 0 2.2%, transparent 9.9%),
+    radial-gradient(circle at 10% 40%, #000 0 2.8%, transparent 11.4%),
+    radial-gradient(circle at 24% 52%, #000 0 2.5%, transparent 10.7%),
+    radial-gradient(circle at 40% 44%, #000 0 2.7%, transparent 11.2%),
+    radial-gradient(circle at 57% 56%, #000 0 2.6%, transparent 11%),
+    radial-gradient(circle at 73% 48%, #000 0 2.8%, transparent 11.3%),
+    radial-gradient(circle at 87% 61%, #000 0 2.4%, transparent 10.4%),
+    radial-gradient(circle at 6% 76%, #000 0 2.5%, transparent 10.8%),
+    radial-gradient(circle at 20% 84%, #000 0 2.8%, transparent 11.5%),
+    radial-gradient(circle at 36% 76%, #000 0 2.4%, transparent 10.4%),
+    radial-gradient(circle at 52% 90%, #000 0 3%, transparent 11.8%),
+    radial-gradient(circle at 70% 82%, #000 0 2.7%, transparent 11.2%),
+    radial-gradient(circle at 86% 88%, #000 0 2.5%, transparent 10.7%),
+    radial-gradient(circle at 95% 74%, #000 0 2.2%, transparent 9.9%);
+}
+
+.page {
+  width: min(1500px, 97vw);
+  margin: 0 auto;
+  padding: 3rem 0 4rem;
+}
+
+.hero {
+  margin-bottom: 2rem;
+  max-width: 980px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #9cd2ff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0.35rem 0;
+  font-size: clamp(3rem, 2.1rem + 3.2vw, 5rem);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+}
+
+.subhead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.12rem;
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.intro-card {
+  background: linear-gradient(160deg, #143452, #112f4b);
+  border: 1px solid var(--ring);
+  border-radius: 16px;
+  padding: 1rem 1.05rem;
+  box-shadow: 0 18px 30px -24px #000000d9;
+}
+
+.intro-card h2 {
+  margin: 0 0 0.45rem;
+  font-size: 1.15rem;
+}
+
+.intro-card p {
+  margin: 0.45rem 0 0;
+  color: #e0efff;
+  font-size: 1.04rem;
+  line-height: 1.45;
+}
+
+.intro-line {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.contact-list {
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-list li {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  border-top: 1px solid #8bc6ff2b;
+  padding: 0.56rem 0;
+}
+
+.contact-list li:first-child {
+  border-top: 0;
+  padding-top: 0.2rem;
+}
+
+.contact-list span {
+  color: #9fbbd8;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.contact-list a {
+  color: #e6f2ff;
+  font-size: 1.03rem;
+  text-decoration: none;
+}
+
+.contact-list a:hover {
+  color: #9ed1ff;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.1rem;
+}
+
+.card {
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--ring);
+  box-shadow: 0 22px 32px -26px #000000db;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.card::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #4ea8ff, #8dd4ff);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 36px -22px #000000;
+}
+
+.preview-link {
+  display: block;
+  aspect-ratio: 16 / 10;
+  border-bottom: 1px solid var(--ring);
+}
+
+.preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card-body {
+  padding: 0.9rem 1rem 1rem;
+}
+
+h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.14rem;
+}
+
+.url {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.type-pill {
+  display: inline-block;
+  margin: 0 0 0.8rem;
+  padding: 0.22rem 0.58rem;
+  border-radius: 999px;
+  background: #8fcbff24;
+  color: #9fd2ff;
+  border: 1px solid #8fcbff40;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.type-pill.soft {
+  background: #8fcbff14;
+  color: #c8e6ff;
+}
+
+.meta-links {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
+}
+
+.action {
+  display: inline-block;
+  text-decoration: none;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.secondary {
+  color: #bde2ff;
+}
+
+.action:hover {
+  color: var(--accent-strong);
+}
+
+.details-toggle {
+  border: 1px solid #8bc6ff52;
+  background: #0f2f4a;
+  color: #d9ecff;
+  border-radius: 10px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.83rem;
+  font-family: inherit;
+  cursor: pointer;
+  margin: 0 0 0.3rem;
+}
+
+.details-toggle:hover {
+  background: #143a5b;
+}
+
+.detail {
+  border-top: 1px solid var(--ring);
+  padding-top: 0.8rem;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 260ms ease, opacity 180ms ease;
+}
+
+.detail.open {
+  opacity: 1;
+  max-height: 1800px;
+}
+
+.detail h3 {
+  margin: 0.7rem 0 0.2rem;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #c7e4ff;
+}
+
+.detail p {
+  margin: 0;
+  color: #e3f0ff;
+  font-size: 1.03rem;
+  line-height: 1.45;
+}
+
+.detail ul {
+  margin: 0.2rem 0 0;
+  padding-left: 1rem;
+  color: #e3f0ff;
+  font-size: 1.01rem;
+  line-height: 1.4;
+}
+
+.detail li + li {
+  margin-top: 0.2rem;
+}
+
+.framework {
+  margin-top: 2.1rem;
+  padding: 1.2rem;
+  border-radius: 22px;
+  background: linear-gradient(155deg, #12314f, #0f2a43);
+  border: 1px solid #8bc6ff3d;
+  box-shadow: 0 22px 30px -27px #000000f2;
+}
+
+.framework-head {
+  max-width: 760px;
+}
+
+.framework-head h2 {
+  margin: 0.2rem 0 0.45rem;
+  font-size: 1.45rem;
+}
+
+.framework-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.02rem;
+}
+
+.framework-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.8rem;
+}
+
+.framework-card {
+  background: var(--surface-soft);
+  border: 1px solid var(--ring);
+  border-radius: 14px;
+  padding: 0.78rem 0.82rem;
+}
+
+.framework-card h3 {
+  margin: 0 0 0.32rem;
+  font-size: 1.08rem;
+  color: #deefff;
+}
+
+.framework-card ul {
+  margin: 0;
+  padding-left: 1rem;
+  color: #e2f0ff;
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+.framework-card li + li {
+  margin-top: 0.2rem;
+}
+
+.reveal {
+  animation: riseIn 420ms ease both;
+}
+
+.grid .card:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-top: 2.2rem;
+  }
+
+  .intro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .framework {
+    margin-top: 1.5rem;
+    padding: 1rem;
+  }
+
+  .detail p,
+  .detail ul,
+  .framework-card ul {
+    font-size: 0.96rem;
+  }
+}
