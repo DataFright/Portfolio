@@ -1,5 +1,3 @@
-import { useState } from "react"
-
 const projects = [
   {
     name: "Groupz",
@@ -148,8 +146,6 @@ const frameworkCards = [
 ]
 
 function ProjectCard({ project }) {
-  const [expanded, setExpanded] = useState(false)
-
   return (
     <article className="card reveal">
       <a className="preview-link" href={project.url} target="_blank" rel="noreferrer">
@@ -172,28 +168,23 @@ function ProjectCard({ project }) {
           </a>
         </div>
 
-        <button className="details-toggle" type="button" onClick={() => setExpanded(v => !v)}>
-          {expanded ? "Hide details" : "Show details"}
-        </button>
-
-        <div className={`detail ${expanded ? "open" : ""}`}>
-          {expanded &&
-            project.sections.map(section => (
-              <div key={section.title}>
-                <h3>{section.title}</h3>
-                {section.content ? (
-                  <p>{section.content}</p>
-                ) : (
-                  <ul>
-                    {section.list.map(([key, text]) => (
-                      <li key={key}>
-                        <strong>{key}</strong>: {text}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
+        <div className="detail open">
+          {project.sections.map(section => (
+            <div key={section.title}>
+              <h3>{section.title}</h3>
+              {section.content ? (
+                <p>{section.content}</p>
+              ) : (
+                <ul>
+                  {section.list.map(([key, text]) => (
+                    <li key={key}>
+                      <strong>{key}</strong>: {text}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </article>
