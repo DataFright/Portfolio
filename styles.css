@@ -12,10 +12,55 @@
   --grid-major-step: calc(var(--grid-unit) * 5);
   --radius: 0;
 
+  /* ── Blueprint geometry — fallback values (overridden by blueprint.js) ── */
+  --layout-columns: 56;
+  --layout-top-pad-cells: 3;
+  --layout-bottom-pad-cells: 4;
+  --page-margin-left: 0px;
+
+  --hero-start: 3;
+  --hero-cells: 40;
+
+  --intro-start: 3;
+  --intro-span-cells: 52;
+  --intro-main-start: 1;
+  --intro-main-cells: 31;
+  --intro-contact-start: 33;
+  --intro-contact-cells: 20;
+
+  --projects-start: 3;
+  --projects-span-cells: 52;
+  --project-left-start: 1;
+  --project-right-start: 28;
+  --project-card-cells: 25;
+
+  --framework-start: 3;
+  --framework-span-cells: 52;
+  --framework-col-1-start: 1;
+  --framework-col-2-start: 19;
+  --framework-col-3-start: 37;
+  --framework-card-cells: 16;
+  --framework-head-cells: 30;
+  --contact-label-cells: 3;
+  --preview-height-cells: 15;
+
   --space-1: calc(var(--grid-unit) * 1);
   --space-2: calc(var(--grid-unit) * 2);
   --space-3: calc(var(--grid-unit) * 3);
   --space-4: calc(var(--grid-unit) * 4);
+
+  --page-span: calc(var(--grid-unit) * var(--layout-columns));
+  --hero-span: calc(var(--grid-unit) * var(--hero-cells));
+  --intro-main-span: calc(var(--grid-unit) * var(--intro-main-cells));
+  --intro-contact-span: calc(var(--grid-unit) * var(--intro-contact-cells));
+  --intro-span: calc(var(--grid-unit) * var(--intro-span-cells));
+  --projects-span: calc(var(--grid-unit) * var(--projects-span-cells));
+  --project-card-span: calc(var(--grid-unit) * var(--project-card-cells));
+  --framework-span: calc(var(--grid-unit) * var(--framework-span-cells));
+  --framework-card-span: calc(var(--grid-unit) * var(--framework-card-cells));
+  --framework-head-span: calc(var(--grid-unit) * var(--framework-head-cells));
+  --contact-label-span: calc(var(--grid-unit) * var(--contact-label-cells));
+  --preview-height: calc(var(--grid-unit) * var(--preview-height-cells));
 
   --page-grid-line: #8ecfff17;
   --page-grid-major: #8ecfff2b;
@@ -84,32 +129,55 @@ body {
 /* Layout */
 /* -------------------------------------------------------------------------- */
 .page {
-  width: 100%;
-  max-width: calc(var(--grid-unit) * 56);
-  margin: 0 auto;
-  padding: var(--space-3) var(--space-2) var(--space-4);
+  display: grid;
+  grid-template-columns: repeat(var(--layout-columns), var(--grid-unit));
+  margin: 0;
+  margin-left: var(--page-margin-left, 0px);
+  padding-top: calc(var(--grid-unit) * var(--layout-top-pad-cells));
+  padding-bottom: calc(var(--grid-unit) * var(--layout-bottom-pad-cells));
+  row-gap: var(--space-1);
 }
 
 .hero {
-  max-width: calc(var(--grid-unit) * 40);
-  margin-bottom: var(--space-1);
+  grid-column: var(--hero-start) / span var(--hero-cells);
+  max-width: var(--hero-span);
 }
 
 .intro-grid {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
+  grid-column: var(--intro-start) / span var(--intro-span-cells);
+  grid-template-columns: repeat(var(--intro-span-cells), var(--grid-unit));
   align-items: start;
-  gap: var(--space-1);
-  margin-bottom: var(--space-1);
+  column-gap: 0;
+  row-gap: var(--space-1);
+}
+
+.intro-grid > .intro-card:not(.contact-card) {
+  grid-column: var(--intro-main-start) / span var(--intro-main-cells);
+}
+
+.intro-grid > .contact-card {
+  grid-column: var(--intro-contact-start) / span var(--intro-contact-cells);
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(calc(var(--grid-unit) * 14), 1fr));
-  gap: var(--space-1);
+  grid-column: var(--projects-start) / span var(--projects-span-cells);
+  grid-template-columns: repeat(var(--projects-span-cells), var(--grid-unit));
+  column-gap: 0;
+  row-gap: var(--space-2);
+}
+
+.grid > .card:nth-child(odd) {
+  grid-column: var(--project-left-start) / span var(--project-card-cells);
+}
+
+.grid > .card:nth-child(even) {
+  grid-column: var(--project-right-start) / span var(--project-card-cells);
 }
 
 .framework {
+  grid-column: var(--framework-start) / span var(--framework-span-cells);
   margin-top: var(--space-2);
   padding: var(--space-1);
   box-shadow: 0 22px 30px -27px #000000f2;
@@ -117,9 +185,22 @@ body {
 
 .framework-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(calc(var(--grid-unit) * 11), 1fr));
-  gap: var(--space-1);
+  grid-template-columns: repeat(var(--framework-span-cells), var(--grid-unit));
+  column-gap: 0;
+  row-gap: var(--space-1);
   margin-top: var(--space-1);
+}
+
+.framework-grid > .framework-card:nth-child(3n + 1) {
+  grid-column: var(--framework-col-1-start) / span var(--framework-card-cells);
+}
+
+.framework-grid > .framework-card:nth-child(3n + 2) {
+  grid-column: var(--framework-col-2-start) / span var(--framework-card-cells);
+}
+
+.framework-grid > .framework-card:nth-child(3n) {
+  grid-column: var(--framework-col-3-start) / span var(--framework-card-cells);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -201,7 +282,7 @@ h2 {
 
 .contact-list li {
   display: grid;
-  grid-template-columns: calc(var(--grid-unit) * 3) 1fr;
+  grid-template-columns: var(--contact-label-span) 1fr;
   gap: var(--space-1);
   align-items: baseline;
   padding: 0;
@@ -251,7 +332,7 @@ h2 {
 
 .preview-link {
   display: block;
-  aspect-ratio: 16 / 10;
+  block-size: var(--preview-height);
   border-bottom: 1px solid var(--ring);
 }
 
@@ -275,7 +356,7 @@ h2 {
 .type-pill {
   display: inline-block;
   margin: 0;
-  padding: 0.22rem 0.58rem;
+  padding: calc(var(--grid-unit) / 4) calc(var(--grid-unit) / 2);
   border-radius: 999px;
   border: 1px solid #8fcbff40;
   background: #8fcbff24;
@@ -336,7 +417,7 @@ h2 {
 
 .detail ul {
   margin: 0;
-  padding-left: 1rem;
+  padding-left: var(--space-1);
   color: #e3f0ff;
   font-size: 1.01rem;
   line-height: 1.4;
@@ -359,7 +440,7 @@ h2 {
 }
 
 .framework-head {
-  max-width: 760px;
+  max-width: var(--framework-head-span);
 }
 
 .framework-head h2 {
@@ -391,7 +472,7 @@ h2 {
 
 .framework-card ul {
   margin: 0;
-  padding-left: 1rem;
+  padding-left: var(--space-1);
   color: #e2f0ff;
   font-size: 1.02rem;
   line-height: 1.35;
@@ -424,22 +505,33 @@ h2 {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Responsive */
+/* Responsive placement — driven by blueprint.js via [data-bp] attribute     */
 /* -------------------------------------------------------------------------- */
-@media (max-width: 640px) {
-  .page {
-    padding: var(--space-2) var(--space-1) var(--space-3);
-  }
 
-  .intro-grid {
-    grid-template-columns: 1fr;
-  }
+/* Tablet: project cards stack, framework goes 2-column */
+[data-bp="tablet"] .grid > .card {
+  grid-column: 1 / span var(--project-card-cells);
+}
 
-  .framework {
-    margin-top: var(--space-1);
-    padding: var(--space-1);
-  }
+[data-bp="tablet"] .framework-grid > .framework-card:nth-child(odd) {
+  grid-column: var(--framework-col-1-start) / span var(--framework-card-cells);
+}
 
+[data-bp="tablet"] .framework-grid > .framework-card:nth-child(even) {
+  grid-column: var(--framework-col-2-start) / span var(--framework-card-cells);
+}
+
+/* Mobile: all sections and cards single column */
+[data-bp="mobile"] .grid > .card {
+  grid-column: 1 / span var(--project-card-cells);
+}
+
+[data-bp="mobile"] .framework-grid > .framework-card {
+  grid-column: 1 / span var(--framework-card-cells);
+}
+
+/* Visual adjustments at small sizes (not layout-affecting) */
+@media (max-width: 768px) {
   .detail p,
   .detail ul,
   .framework-card ul {
