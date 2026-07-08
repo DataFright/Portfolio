@@ -113,6 +113,7 @@ body {
 .card,
 .framework,
 .framework-card {
+  position: relative;
   border: 1px solid var(--ring);
   border-radius: var(--radius);
   background-size:
@@ -123,6 +124,42 @@ body {
     var(--grid-major-step) var(--grid-major-step);
   background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
   background-attachment: scroll, fixed, fixed, fixed, fixed;
+}
+
+/* Blueprint corner markers — L-shaped tick at each panel corner */
+.intro-card::after,
+.card::after,
+.framework::after,
+.framework-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent));
+  background-size:
+    var(--grid-unit) 1px,
+    1px var(--grid-unit),
+    var(--grid-unit) 1px,
+    1px var(--grid-unit),
+    var(--grid-unit) 1px,
+    1px var(--grid-unit),
+    var(--grid-unit) 1px,
+    1px var(--grid-unit);
+  background-position:
+    0 0,       0 0,
+    100% 0,    100% 0,
+    0 100%,    0 100%,
+    100% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.35;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -140,7 +177,6 @@ body {
 
 .hero {
   grid-column: var(--hero-start) / span var(--hero-cells);
-  max-width: var(--hero-span);
 }
 
 .intro-grid {
@@ -508,16 +544,19 @@ h2 {
 /* Responsive placement — driven by blueprint.js via [data-bp] attribute     */
 /* -------------------------------------------------------------------------- */
 
-/* Tablet: project cards stack, framework goes 2-column */
-[data-bp="tablet"] .grid > .card {
+/* Tablet + small-tablet: project cards stack, framework 2-column */
+[data-bp="tablet"] .grid > .card,
+[data-bp="small-tablet"] .grid > .card {
   grid-column: 1 / span var(--project-card-cells);
 }
 
-[data-bp="tablet"] .framework-grid > .framework-card:nth-child(odd) {
+[data-bp="tablet"] .framework-grid > .framework-card:nth-child(odd),
+[data-bp="small-tablet"] .framework-grid > .framework-card:nth-child(odd) {
   grid-column: var(--framework-col-1-start) / span var(--framework-card-cells);
 }
 
-[data-bp="tablet"] .framework-grid > .framework-card:nth-child(even) {
+[data-bp="tablet"] .framework-grid > .framework-card:nth-child(even),
+[data-bp="small-tablet"] .framework-grid > .framework-card:nth-child(even) {
   grid-column: var(--framework-col-2-start) / span var(--framework-card-cells);
 }
 
@@ -537,4 +576,22 @@ h2 {
   .framework-card ul {
     font-size: 0.96rem;
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Blueprint title block                                                      */
+/* -------------------------------------------------------------------------- */
+.page::after {
+  content: 'GRID UNIT : 24PX  ·  SCALE : 1 : 1  ·  DataFright Portfolio';
+  grid-column: 1 / -1;
+  display: block;
+  text-align: right;
+  font-size: 0.6rem;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.25;
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--ring);
 }

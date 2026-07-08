@@ -135,6 +135,36 @@ function makeTablet() {
   }
 }
 
+function makeSmallTablet() {
+  const columns      = 36
+  const contentSpan  = 32       // 36 − 2 left − 2 right
+  const contentStart = 3
+
+  // Framework: [15][2 gap][15] = 32 ✓
+  const { itemSpan: fwCells, starts: [fw1, fw2] } = distribute(contentSpan, 2, 2)
+
+  return {
+    name: 'small-tablet',
+    columns,
+    pad: { top: 2, bottom: 3 },
+    hero: { start: contentStart, span: 28 },
+    intro: {
+      start: contentStart, span: contentSpan,
+      main:    { start: 1, span: contentSpan },
+      contact: { start: 1, span: contentSpan },
+    },
+    projects: {
+      start: contentStart, span: contentSpan,
+      cardCells: contentSpan, leftStart: 1, rightStart: 1,
+    },
+    framework: {
+      start: contentStart, span: contentSpan,
+      cardCells: fwCells, colStarts: [fw1, fw2, fw1],
+    },
+    previewH: 10,
+  }
+}
+
 function makeMobile() {
   const columns      = 24
   const contentSpan  = 24
@@ -162,16 +192,18 @@ function makeMobile() {
   }
 }
 
-const DESKTOP = makeDesktop()
-const TABLET  = makeTablet()
-const MOBILE  = makeMobile()
+const DESKTOP      = makeDesktop()
+const TABLET       = makeTablet()
+const SMALL_TABLET = makeSmallTablet()
+const MOBILE       = makeMobile()
 
 // ─── Breakpoint resolver ──────────────────────────────────────────────────────
 
 function resolveLayout(viewportWidth) {
   const availCells = Math.floor(viewportWidth / CELL_SIZE)
-  if (availCells >= DESKTOP.columns) return DESKTOP
-  if (availCells >= TABLET.columns)  return TABLET
+  if (availCells >= DESKTOP.columns)      return DESKTOP
+  if (availCells >= TABLET.columns)       return TABLET
+  if (availCells >= SMALL_TABLET.columns) return SMALL_TABLET
   return MOBILE
 }
 
