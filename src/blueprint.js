@@ -266,6 +266,63 @@ function applyLayout(L) {
   set('--preview-height-cells', L.previewH)
 }
 
+const driftState = {
+  current: 0,
+  target: 0,
+  offset: 0,
+  velocity: 0,
+  driftRaf: null,
+  lastScrollY: 0,
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function tickForegroundDrift() {
+  const root = document.documentElement
+  const spring = 0.18
+  const damping = 0.72
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    driftState.current = 0
+    driftState.target = 0
+    driftState.offset = 0
+    driftState.velocity = 0
+    root.style.setProperty('--foreground-drift-y', '0px')
+    driftState.driftRaf = null
+    return
+  }
+
+  // Bleed off stored slop faster so the motion settles quickly after input stops.
+  driftState.offset *= 0.88
+  driftState.target = driftState.offset
+
+  const delta = driftState.target - driftState.current
+  driftState.velocity += delta * spring
+  driftState.velocity *= damping
+  driftState.velocity = clamp(driftState.velocity, -5.5, 5.5)
+  driftState.current += driftState.velocity
+  driftState.current = clamp(driftState.current, -96, 96)
+
+  if (Math.abs(driftState.target) < 0.1 && Math.abs(delta) < 0.1 && Math.abs(driftState.velocity) < 0.04) {
+    driftState.current = 0
+    driftState.offset = 0
+    root.style.setProperty('--foreground-drift-y', `${driftState.current.toFixed(3)}px`)
+    driftState.driftRaf = null
+    return
+  }
+
+  root.style.setProperty('--foreground-drift-y', `${driftState.current.toFixed(3)}px`)
+  driftState.driftRaf = requestAnimationFrame(tickForegroundDrift)
+}
+
+function ensureForegroundDriftLoop() {
+  if (driftState.driftRaf === null) {
+    driftState.driftRaf = requestAnimationFrame(tickForegroundDrift)
+  }
+}
+
 // ─── Vertical snap ───────────────────────────────────────────────────────────
 
 /**
@@ -320,23 +377,55 @@ export function snapVertical() {
  * Returns a cleanup function that removes the event listener.
  */
 export function initBlueprint() {
-  let raf = null
+  let layoutRaf = null
 
   function onResize() {
-    if (raf) cancelAnimationFrame(raf)
-    raf = requestAnimationFrame(() => {
+    if (layoutRaf) cancelAnimationFrame(layoutRaf)
+    layoutRaf = requestAnimationFrame(() => {
       applyLayout(resolveLayout(window.innerWidth))
-      raf = null
+      ensureForegroundDriftLoop()
+      layoutRaf = null
     })
+  }
+
+  function onWheel(event) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    // Wheel impulse should respond immediately, even if scroll position barely changes.
+    driftState.offset += clamp(event.deltaY * 0.14, -14, 14)
+    driftState.offset = clamp(driftState.offset, -96, 96)
+    driftState.velocity += clamp(event.deltaY * 0.065, -5, 5)
+    ensureForegroundDriftLoop()
+  }
+
+  function onScroll() {
+    const nextScrollY = window.scrollY
+    const deltaY = nextScrollY - driftState.lastScrollY
+    driftState.lastScrollY = nextScrollY
+
+    if (deltaY === 0) return
+
+    // Actual page movement adds a softer correction layer on top of wheel input.
+    driftState.offset += clamp(deltaY * 0.07, -5, 5)
+    driftState.offset = clamp(driftState.offset, -96, 96)
+    driftState.velocity += clamp(deltaY * 0.038, -2.8, 2.8)
+    ensureForegroundDriftLoop()
   }
 
   // Apply synchronously on first call so CSS vars are set before first paint
   applyLayout(resolveLayout(window.innerWidth))
+  driftState.lastScrollY = window.scrollY
+  document.documentElement.style.setProperty('--foreground-drift-y', '0px')
 
   window.addEventListener('resize', onResize, { passive: true })
+  window.addEventListener('wheel', onWheel, { passive: true })
+  window.addEventListener('scroll', onScroll, { passive: true })
 
   return function cleanup() {
     window.removeEventListener('resize', onResize)
-    if (raf) cancelAnimationFrame(raf)
+    window.removeEventListener('wheel', onWheel)
+    window.removeEventListener('scroll', onScroll)
+    if (layoutRaf) cancelAnimationFrame(layoutRaf)
+    if (driftState.driftRaf) cancelAnimationFrame(driftState.driftRaf)
   }
 }

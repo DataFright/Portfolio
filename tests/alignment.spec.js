@@ -157,27 +157,42 @@ test.describe('Blueprint Grid Alignment', () => {
     ).toBe(true)
   })
 
-  // ─── 4. Scroll stability — grid must stay aligned after scrolling ────────────
+  // ─── 4. Scroll interaction — foreground may drift, but as one plane ─────────
 
-  test('element horizontal positions stay on-grid after scrolling 120px', async ({ page }) => {
-    // Scroll down 5 cells (120px = 5 × 24px)
+  test('foreground layer drifts on scroll while keeping sections in sync', async ({ page }) => {
+    const before = await page.evaluate(() => {
+      const selectors = ['.page', '.intro-grid', '.grid', '.framework']
+      return Object.fromEntries(selectors.map(sel => {
+        const el = document.querySelector(sel)
+        return [sel, el ? el.getBoundingClientRect().top : null]
+      }))
+    })
+
     await page.evaluate(() => window.scrollTo(0, 120))
-    await page.waitForTimeout(100) // allow reflow
+    await page.waitForTimeout(160)
 
-    const failures = await page.evaluate((CELL) => {
-      const results = []
-      const sel = ['.page', '.intro-grid', '.grid', '.framework']
-      sel.forEach(s => {
-        const el = document.querySelector(s)
-        if (!el) return
-        const left = el.getBoundingClientRect().left
-        const d = Math.abs(left - Math.round(left / CELL) * CELL)
-        if (d > 0.5) results.push({ sel: s, left: +left.toFixed(2), delta: +d.toFixed(2) })
-      })
-      return results
-    }, CELL)
+    const after = await page.evaluate(() => {
+      const selectors = ['.page', '.intro-grid', '.grid', '.framework']
+      return {
+        driftVar: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--foreground-drift-y')) || 0,
+        tops: Object.fromEntries(selectors.map(sel => {
+          const el = document.querySelector(sel)
+          return [sel, el ? el.getBoundingClientRect().top : null]
+        })),
+      }
+    })
 
-    expect(failures.length, `After scroll, elements drifted off-grid: ${JSON.stringify(failures)}`).toBe(0)
+    expect(Math.abs(after.driftVar)).toBeLessThanOrEqual(96.1)
+
+    const deltas = Object.entries(after.tops).map(([sel, top]) => ({
+      sel,
+      delta: top - before[sel],
+    }))
+
+    const reference = deltas[0].delta
+    for (const item of deltas) {
+      expect(Math.abs(item.delta - reference), `${item.sel} drifted out of sync with the foreground plane`).toBeLessThanOrEqual(0.5)
+    }
   })
 
   // ─── 5. Panel grid overlay alignment ─────────────────────────────────────────

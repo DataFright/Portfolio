@@ -17,6 +17,7 @@
   --layout-top-pad-cells: 3;
   --layout-bottom-pad-cells: 4;
   --page-margin-left: 0px;
+  --foreground-drift-y: 0px;
 
   --hero-start: 3;
   --hero-cells: 40;
@@ -140,6 +141,8 @@ body {
   padding-top: calc(var(--grid-unit) * var(--layout-top-pad-cells));
   padding-bottom: calc(var(--grid-unit) * var(--layout-bottom-pad-cells));
   row-gap: var(--space-1);
+  transform: translate3d(0, var(--foreground-drift-y), 0);
+  will-change: transform;
 }
 
 .hero {
