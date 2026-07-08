@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Programming monitor icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0e2740"/>
+      <stop offset="100%" stop-color="#081727"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="4" width="58" height="42" rx="6" fill="url(#bg)" stroke="#57b0ff" stroke-width="2"/>
+  <rect x="8" y="9" width="48" height="32" rx="3" fill="#061321"/>
+  <path d="M20 20 L14 25 L20 30" fill="none" stroke="#57b0ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M30 18 L26 32" fill="none" stroke="#8fcbff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M38 30 L44 25 L38 20" fill="none" stroke="#57b0ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="27" y="46" width="10" height="5" rx="1.5" fill="#8fcbff"/>
+  <rect x="20" y="51" width="24" height="6" rx="2" fill="#123652" stroke="#57b0ff" stroke-width="1"/>
+</svg>

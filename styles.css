@@ -663,31 +663,30 @@ h2 {
 /* Visual adjustments at small sizes (not layout-affecting) */
 @media (max-width: 768px) {
   .left-rail {
-    position: relative;
-    left: 0;
-    top: auto;
-    bottom: auto;
-    width: auto;
-    grid-column: 1 / -1;
+    position: fixed;
+    left: 6px;
+    top: 0;
+    bottom: 0;
+    width: 0;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: calc(var(--grid-unit) * 0.7);
-    margin-bottom: var(--space-1);
-    padding: 0 var(--space-1);
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
+    z-index: 6;
   }
 
   .rail-text,
   .rail-scale {
-    transform: none;
-    transform-origin: center;
+    transform: rotate(-90deg);
+    transform-origin: left center;
     position: relative;
-    left: auto;
+    left: 0;
+    font-size: 0.52rem;
+    letter-spacing: 0.1em;
   }
 
   .rail-scale {
-    gap: calc(var(--grid-unit) * 0.35);
+    gap: calc(var(--grid-unit) * 0.25);
   }
 
   .detail p,

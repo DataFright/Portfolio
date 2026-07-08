@@ -279,12 +279,16 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
+function isMobileViewport() {
+  return window.matchMedia('(max-width: 768px)').matches
+}
+
 function tickForegroundDrift() {
   const root = document.documentElement
   const spring = 0.18
   const damping = 0.72
 
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || isMobileViewport()) {
     driftState.current = 0
     driftState.target = 0
     driftState.offset = 0
@@ -384,13 +388,21 @@ export function initBlueprint() {
     layoutRaf = requestAnimationFrame(() => {
       applyLayout(resolveLayout(window.innerWidth))
       snapVertical()
-      ensureForegroundDriftLoop()
+      if (isMobileViewport()) {
+        driftState.current = 0
+        driftState.target = 0
+        driftState.offset = 0
+        driftState.velocity = 0
+        document.documentElement.style.setProperty('--foreground-drift-y', '0px')
+      } else {
+        ensureForegroundDriftLoop()
+      }
       layoutRaf = null
     })
   }
 
   function onWheel(event) {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || isMobileViewport()) return
 
     // Wheel impulse should respond immediately, even if scroll position barely changes.
     driftState.offset += clamp(event.deltaY * 0.14, -14, 14)
@@ -400,6 +412,8 @@ export function initBlueprint() {
   }
 
   function onScroll() {
+    if (isMobileViewport()) return
+
     const nextScrollY = window.scrollY
     const deltaY = nextScrollY - driftState.lastScrollY
     driftState.lastScrollY = nextScrollY
