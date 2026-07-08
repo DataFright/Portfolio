@@ -383,6 +383,7 @@ export function initBlueprint() {
     if (layoutRaf) cancelAnimationFrame(layoutRaf)
     layoutRaf = requestAnimationFrame(() => {
       applyLayout(resolveLayout(window.innerWidth))
+      snapVertical()
       ensureForegroundDriftLoop()
       layoutRaf = null
     })

@@ -548,5 +548,4 @@ h2 {
   color: var(--accent);
   opacity: 0.25;
   padding-top: var(--space-1);
-  border-top: 1px solid var(--ring);
 }
