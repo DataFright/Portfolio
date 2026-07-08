@@ -1,3 +1,6 @@
+import { useLayoutEffect } from 'react'
+import { snapVertical } from './blueprint.js'
+
 const projects = [
   {
     name: "Groupz",
@@ -192,6 +195,14 @@ function ProjectCard({ project }) {
 }
 
 function App() {
+  useLayoutEffect(() => {
+    // Snap every section's height to the 24px grid so tops cascade on-grid.
+    // useLayoutEffect fires synchronously after DOM paint — ideal for layout measurement.
+    snapVertical()
+    // Re-snap after fonts finish loading (avoids measuring before web fonts render)
+    document.fonts.ready.then(snapVertical)
+  }, [])
+
   return (
     <main className="page">
       <header className="hero">

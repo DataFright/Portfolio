@@ -21,6 +21,7 @@ const onGrid = v => Math.abs(v - Math.round(v / CELL) * CELL) <= TOL
 
 test.describe('Blueprint Grid Alignment', () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 1200 })
     await page.goto('http://localhost:3000/')
     await page.waitForSelector('.framework-card')
     await page.evaluate(() => window.scrollTo(0, 0))
@@ -109,11 +110,18 @@ test.describe('Blueprint Grid Alignment', () => {
     const result = await page.evaluate((CELL) => {
       const fw     = document.querySelector('.framework')
       const fwCard = document.querySelector('.framework-card')
-      if (!fw || !fwCard) return { error: 'elements not found' }
+      const fwGrid = document.querySelector('.framework-grid')
+      const fwCards = Array.from(document.querySelectorAll('.framework-card'))
+      if (!fw || !fwCard || !fwGrid) return { error: 'elements not found' }
 
       const fwRect   = fw.getBoundingClientRect()
       const cardRect = fwCard.getBoundingClientRect()
+      const gridRect = fwGrid.getBoundingClientRect()
       const cs       = getComputedStyle(fw)
+      const maxOverflowRight = fwCards.reduce((max, el) => {
+        const r = el.getBoundingClientRect()
+        return Math.max(max, r.right - gridRect.right)
+      }, -Infinity)
 
       const borderLeft  = parseFloat(cs.borderLeftWidth)
       const paddingLeft = parseFloat(cs.paddingLeft)
@@ -130,6 +138,8 @@ test.describe('Blueprint Grid Alignment', () => {
         // Also check first fw-card
         fwCardLeft: +cardRect.left.toFixed(2),
         fwCardDelta: +Math.abs(cardRect.left - Math.round(cardRect.left / CELL) * CELL).toFixed(2),
+        fwGridRight: +gridRect.right.toFixed(2),
+        maxOverflowRight: +maxOverflowRight.toFixed(2),
       }
     }, CELL)
 
@@ -140,6 +150,10 @@ test.describe('Blueprint Grid Alignment', () => {
 
     expect(result.fwCardDelta <= 0.5,
       `fw-card[1] left edge ${result.fwCardLeft}px is ${result.fwCardDelta}px off grid`
+    ).toBe(true)
+
+    expect(result.maxOverflowRight <= 0.5,
+      `framework cards extend ${result.maxOverflowRight}px past framework-grid right edge ${result.fwGridRight}px`
     ).toBe(true)
   })
 
@@ -197,4 +211,59 @@ test.describe('Blueprint Grid Alignment', () => {
       `Framework-card background uses 'fixed' attachment — panel grid will drift on scroll`
     ).toBe(true)
   })
+
+  // ─── 6. Vertical alignment — section heights and tops must be on-grid ────────
+
+  test('section and panel heights are multiples of 24px after snapVertical()', async ({ page }) => {
+    // snapVertical() is called via useLayoutEffect in App.jsx.
+    // Verify both outer sections and visible nested panels at desktop width.
+    const failures = await page.evaluate((CELL) => {
+      const sels = ['.hero', '.intro-grid', '.grid', '.framework', '.intro-card', '.contact-card', '.card', '.framework-card']
+      return sels.flatMap(sel => {
+        return Array.from(document.querySelectorAll(sel)).flatMap((el, i) => {
+          const h = el.getBoundingClientRect().height
+          const delta = Math.abs(h % CELL < CELL / 2 ? h % CELL : CELL - (h % CELL))
+          if (delta > 0.5) {
+            return [{ sel: `${sel}[${i + 1}]`, height: +h.toFixed(2), mod: +(h % CELL).toFixed(2), delta: +delta.toFixed(2) }]
+          }
+          return []
+        })
+      })
+    }, CELL)
+
+    if (failures.length) {
+      const msg = failures.map(f => f.error
+        ? `  ${f.sel}: ${f.error}`
+        : `  ${f.sel}: height ${f.height}px — ${f.mod}px past last cell (need +${(CELL - f.mod).toFixed(1)}px snap)`)
+        .join('\n')
+      expect(failures.length, `Section/panel heights not on vertical grid:\n${msg}`).toBe(0)
+    }
+  })
+
+  test('section and panel top positions are on the vertical 24px grid (at scroll=0)', async ({ page }) => {
+    await page.evaluate(() => window.scrollTo(0, 0))
+
+    const failures = await page.evaluate((CELL) => {
+      const sels = ['.hero', '.intro-grid', '.grid', '.framework', '.intro-card', '.contact-card', '.card', '.framework-card']
+      return sels.flatMap(sel => {
+        return Array.from(document.querySelectorAll(sel)).flatMap((el, i) => {
+          const top = el.getBoundingClientRect().top
+          const delta = Math.abs(top - Math.round(top / CELL) * CELL)
+          if (delta > 0.5) {
+            return [{ sel: `${sel}[${i + 1}]`, top: +top.toFixed(2), nearest: Math.round(top / CELL) * CELL, delta: +delta.toFixed(2) }]
+          }
+          return []
+        })
+      })
+    }, CELL)
+
+    if (failures.length) {
+      const msg = failures.map(f => f.error
+        ? `  ${f.sel}: ${f.error}`
+        : `  ${f.sel}: top ${f.top}px — ${f.delta}px off nearest grid line ${f.nearest}px`)
+        .join('\n')
+      expect(failures.length, `Section/panel tops not on vertical grid:\n${msg}`).toBe(0)
+    }
+  })
 })
+

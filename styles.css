@@ -67,14 +67,16 @@
   --panel-grid-line: #8fcfff14;
   --panel-grid-major: #8fcfff1f;
 
-  --panel-intro-top: #143452f0;
-  --panel-intro-bottom: #112f4bf2;
-  --panel-card-top: #123652f0;
-  --panel-card-bottom: #102d47f3;
-  --panel-framework-top: #12314ff0;
-  --panel-framework-bottom: #0f2a43f3;
-  --panel-framework-card-top: #163d61f0;
-  --panel-framework-card-bottom: #11314df3;
+  --page-dark: #061321;
+
+  --panel-intro-top: #143452c7;
+  --panel-intro-bottom: #112f4bcb;
+  --panel-card-top: #123652c7;
+  --panel-card-bottom: #102d47cb;
+  --panel-framework-top: #12314fc7;
+  --panel-framework-bottom: #0f2a43cb;
+  --panel-framework-card-top: #163d61bf;
+  --panel-framework-card-bottom: #11314dc4;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -90,13 +92,13 @@ body {
   color: var(--text);
   font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
   overflow-x: hidden;
-  background-color: #050f1d;
+  background-color: var(--page-dark);
   background-image:
     linear-gradient(var(--page-grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--page-grid-line) 1px, transparent 1px),
     linear-gradient(var(--page-grid-major) 1px, transparent 1px),
     linear-gradient(90deg, var(--page-grid-major) 1px, transparent 1px),
-    linear-gradient(165deg, #040e1af2 0%, #081a2df0 52%, #0a233af5 100%);
+    linear-gradient(var(--page-dark), var(--page-dark));
   background-size:
     var(--grid-unit) var(--grid-unit),
     var(--grid-unit) var(--grid-unit),
@@ -124,42 +126,6 @@ body {
     var(--grid-major-step) var(--grid-major-step);
   background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
   background-attachment: scroll, scroll, scroll, scroll, scroll;
-}
-
-/* Blueprint corner markers — L-shaped tick at each panel corner */
-.intro-card::after,
-.card::after,
-.framework::after,
-.framework-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(var(--accent), var(--accent)),
-    linear-gradient(var(--accent), var(--accent)),
-    linear-gradient(var(--accent), var(--accent)),
-    linear-gradient(var(--accent), var(--accent)),
-    linear-gradient(var(--accent), var(--accent)),
-    linear-gradient(var(--accent), var(--accent)),
-    linear-gradient(var(--accent), var(--accent)),
-    linear-gradient(var(--accent), var(--accent));
-  background-size:
-    var(--grid-unit) 1px,
-    1px var(--grid-unit),
-    var(--grid-unit) 1px,
-    1px var(--grid-unit),
-    var(--grid-unit) 1px,
-    1px var(--grid-unit),
-    var(--grid-unit) 1px,
-    1px var(--grid-unit);
-  background-position:
-    0 0,       0 0,
-    100% 0,    100% 0,
-    0 100%,    0 100%,
-    100% 100%, 100% 100%;
-  background-repeat: no-repeat;
-  opacity: 0.35;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -222,7 +188,7 @@ body {
 
 .framework-grid {
   display: grid;
-  grid-template-columns: repeat(var(--framework-span-cells), var(--grid-unit));
+  grid-template-columns: repeat(var(--framework-inner-span-cells), var(--grid-unit));
   column-gap: 0;
   row-gap: var(--space-1);
   margin-top: var(--space-1);
@@ -523,22 +489,7 @@ h2 {
 /* Motion */
 /* -------------------------------------------------------------------------- */
 .reveal {
-  animation: riseIn 420ms ease both;
-}
-
-.grid .card:nth-child(2) {
-  animation-delay: 80ms;
-}
-
-@keyframes riseIn {
-  from {
-    opacity: 0;
-    transform: translateY(var(--grid-unit));
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  opacity: 1;
 }
 
 /* -------------------------------------------------------------------------- */

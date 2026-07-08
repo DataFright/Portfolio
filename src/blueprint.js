@@ -80,8 +80,10 @@ function makeDesktop() {
   // Projects: [25][2 gap][25] = 52 ✓
   const { itemSpan: projCells, starts: [pLeft, pRight] } = distribute(contentSpan, 2, 2)
 
-  // Framework: [16][2 gap][16][2 gap][16] = 52 ✓
-  const { itemSpan: fwCells, starts: [fw1, fw2, fw3] } = distribute(contentSpan, 3, 2)
+  const frameworkInnerSpan = contentSpan - 2
+
+  // Framework inner area: [16][1 gap][16][1 gap][16] = 50 ✓
+  const { itemSpan: fwCells, starts: [fw1, fw2, fw3] } = distribute(frameworkInnerSpan, 3, 1)
 
   return {
     name: 'desktop',
@@ -98,7 +100,7 @@ function makeDesktop() {
       cardCells: projCells, leftStart: pLeft, rightStart: pRight,
     },
     framework: {
-      start: contentStart, span: contentSpan,
+      start: contentStart, span: contentSpan, innerSpan: frameworkInnerSpan,
       cardCells: fwCells, colStarts: [fw1, fw2, fw3],
     },
     previewH: 15,
@@ -110,8 +112,10 @@ function makeTablet() {
   const contentSpan  = 36       // 40 − 2 left − 2 right
   const contentStart = 3
 
-  // Framework: [17][2 gap][17] = 36 ✓
-  const { itemSpan: fwCells, starts: [fw1, fw2] } = distribute(contentSpan, 2, 2)
+  const frameworkInnerSpan = contentSpan - 2
+
+  // Framework inner area: [16][2 gap][16] = 34 ✓
+  const { itemSpan: fwCells, starts: [fw1, fw2] } = distribute(frameworkInnerSpan, 2, 2)
 
   return {
     name: 'tablet',
@@ -128,7 +132,7 @@ function makeTablet() {
       cardCells: contentSpan, leftStart: 1, rightStart: 1,
     },
     framework: {
-      start: contentStart, span: contentSpan,
+      start: contentStart, span: contentSpan, innerSpan: frameworkInnerSpan,
       cardCells: fwCells, colStarts: [fw1, fw2, fw1],
     },
     previewH: 12,
@@ -140,8 +144,10 @@ function makeSmallTablet() {
   const contentSpan  = 32       // 36 − 2 left − 2 right
   const contentStart = 3
 
-  // Framework: [15][2 gap][15] = 32 ✓
-  const { itemSpan: fwCells, starts: [fw1, fw2] } = distribute(contentSpan, 2, 2)
+  const frameworkInnerSpan = contentSpan - 2
+
+  // Framework inner area: [14][2 gap][14] = 30 ✓
+  const { itemSpan: fwCells, starts: [fw1, fw2] } = distribute(frameworkInnerSpan, 2, 2)
 
   return {
     name: 'small-tablet',
@@ -158,7 +164,7 @@ function makeSmallTablet() {
       cardCells: contentSpan, leftStart: 1, rightStart: 1,
     },
     framework: {
-      start: contentStart, span: contentSpan,
+      start: contentStart, span: contentSpan, innerSpan: frameworkInnerSpan,
       cardCells: fwCells, colStarts: [fw1, fw2, fw1],
     },
     previewH: 10,
@@ -185,7 +191,7 @@ function makeMobile() {
       cardCells: contentSpan, leftStart: 1, rightStart: 1,
     },
     framework: {
-      start: contentStart, span: contentSpan,
+      start: contentStart, span: contentSpan, innerSpan: contentSpan - 2,
       cardCells: contentSpan, colStarts: [1, 1, 1],
     },
     previewH: 9,
@@ -250,6 +256,7 @@ function applyLayout(L) {
   // Framework section
   set('--framework-start',      L.framework.start)
   set('--framework-span-cells', L.framework.span)
+  set('--framework-inner-span-cells', L.framework.innerSpan)
   set('--framework-card-cells', L.framework.cardCells)
   L.framework.colStarts.forEach((s, i) =>
     set(`--framework-col-${i + 1}-start`, s)
@@ -259,7 +266,49 @@ function applyLayout(L) {
   set('--preview-height-cells', L.previewH)
 }
 
-// ─── Initialization ───────────────────────────────────────────────────────────
+// ─── Vertical snap ───────────────────────────────────────────────────────────
+
+/**
+ * Snap visible sections and panels to the nearest 24px height boundary.
+ *
+ * Outer sections can be on-grid while nested visible panels still land a few
+ * pixels short or long, especially on wider breakpoints where cards sit in
+ * their own rows/columns. This snaps leaf panels first, then the containing
+ * layout sections, so both the panel edges and the section boundaries line up.
+ *
+ * Call via useLayoutEffect in App.jsx (after every React render).
+ */
+export function snapVertical() {
+  const selectors = [
+    '.intro-card',
+    '.card',
+    '.framework-card',
+    '.framework-head',
+    '.framework-grid',
+    '.hero',
+    '.intro-grid',
+    '.grid',
+    '.framework',
+  ]
+
+  const nodes = selectors.flatMap(selector => Array.from(document.querySelectorAll(selector)))
+  if (!nodes.length) return
+
+  // Pass 1: remove previous snap adjustments so we measure natural CSS heights.
+  nodes.forEach(el => {
+    el.style.removeProperty('padding-bottom')
+  })
+
+  // Pass 2: snap leaf panels first, then the containing sections.
+  nodes.forEach(el => {
+    const height = el.getBoundingClientRect().height
+    const mod = height % CELL_SIZE
+    const delta = mod < 0.5 ? 0 : CELL_SIZE - mod
+    if (delta < 0.5) return
+    const existing = parseFloat(getComputedStyle(el).paddingBottom) || 0
+    el.style.paddingBottom = (existing + delta) + 'px'
+  })
+}
 
 /**
  * Initialize the blueprint geometry engine.
