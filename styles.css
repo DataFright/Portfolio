@@ -664,7 +664,7 @@ h2 {
 @media (max-width: 768px) {
   .left-rail {
     position: fixed;
-    left: 6px;
+    left: 12px;
     top: 0;
     bottom: 0;
     width: 0;
@@ -678,10 +678,10 @@ h2 {
   .rail-text,
   .rail-scale {
     transform: rotate(-90deg);
-    transform-origin: left center;
+    transform-origin: left top;
     position: relative;
     left: 0;
-    font-size: 0.52rem;
+    font-size: 0.5rem;
     letter-spacing: 0.1em;
   }
 

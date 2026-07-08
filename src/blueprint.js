@@ -16,7 +16,7 @@
  * Responsive model (columns switch, not styles):
  *   desktop  ≥ 56 cells wide
  *   tablet   ≥ 40 cells wide
- *   mobile   < 40 cells wide (dynamic 1..24 columns to fit viewport)
+ *   mobile   < 40 cells wide (dynamic columns with reserved side gutters)
  */
 
 // ─── Grid constants ───────────────────────────────────────────────────────────
@@ -174,14 +174,15 @@ function makeSmallTablet() {
 
 function makeMobile(availCells) {
   const columns      = Math.max(1, Math.min(24, availCells))
-  const contentSpan  = columns
-  const contentStart = 1
+  const sideGutter   = columns >= 18 ? 2 : 1
+  const contentSpan  = Math.max(1, columns - sideGutter * 2)
+  const contentStart = sideGutter + 1
 
   return {
     name: 'mobile',
     columns,
     pad: { top: 2, bottom: 3 },
-    hero:    { start: 1, span: columns },
+    hero:    { start: contentStart, span: contentSpan },
     intro: {
       start: contentStart, span: contentSpan,
       main:    { start: 1, span: contentSpan },
@@ -192,7 +193,7 @@ function makeMobile(availCells) {
       cardCells: contentSpan, leftStart: 1, rightStart: 1,
     },
     framework: {
-      start: contentStart, span: contentSpan, innerSpan: contentSpan - 2,
+      start: contentStart, span: contentSpan, innerSpan: Math.max(1, contentSpan - 2),
       cardCells: contentSpan, colStarts: [1, 1, 1],
     },
     previewH: 9,
