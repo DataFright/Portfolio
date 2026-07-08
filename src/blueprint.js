@@ -16,7 +16,7 @@
  * Responsive model (columns switch, not styles):
  *   desktop  ≥ 56 cells wide
  *   tablet   ≥ 40 cells wide
- *   mobile   < 40 cells wide (24-column fallback)
+ *   mobile   < 40 cells wide (dynamic 1..24 columns to fit viewport)
  */
 
 // ─── Grid constants ───────────────────────────────────────────────────────────
@@ -172,9 +172,9 @@ function makeSmallTablet() {
   }
 }
 
-function makeMobile() {
-  const columns      = 24
-  const contentSpan  = 24
+function makeMobile(availCells) {
+  const columns      = Math.max(1, Math.min(24, availCells))
+  const contentSpan  = columns
   const contentStart = 1
 
   return {
@@ -202,7 +202,6 @@ function makeMobile() {
 const DESKTOP      = makeDesktop()
 const TABLET       = makeTablet()
 const SMALL_TABLET = makeSmallTablet()
-const MOBILE       = makeMobile()
 
 // ─── Breakpoint resolver ──────────────────────────────────────────────────────
 
@@ -211,7 +210,7 @@ function resolveLayout(viewportWidth) {
   if (availCells >= DESKTOP.columns)      return DESKTOP
   if (availCells >= TABLET.columns)       return TABLET
   if (availCells >= SMALL_TABLET.columns) return SMALL_TABLET
-  return MOBILE
+  return makeMobile(availCells)
 }
 
 // ─── CSS custom property writer ───────────────────────────────────────────────
