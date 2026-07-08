@@ -171,6 +171,7 @@ body {
   grid-column: var(--projects-start) / span var(--projects-span-cells);
   grid-template-columns: repeat(var(--projects-span-cells), var(--grid-unit));
   column-gap: 0;
+  margin-top: var(--space-2);
   row-gap: var(--space-2);
 }
 

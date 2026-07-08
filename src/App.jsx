@@ -56,7 +56,7 @@ const projects = [
     appType: "PWA-ready",
     type: "Focus Type: modern web app with PWA-ready patterns",
     status: "Live and fully deployed",
-    preview: "https://image.thum.io/get/width/900/noanimate/https://screenr-iota.vercel.app/",
+    preview: "/previews/screenr-dark.png?v=20260707",
     sections: [
       {
         title: "Concept",
