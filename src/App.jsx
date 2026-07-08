@@ -4,6 +4,7 @@ import { snapVertical } from './blueprint.js'
 const projects = [
   {
     name: "Groupz",
+    annotation: "SECTION B2 : PROJECT_1",
     url: "https://groupz-seven.vercel.app/",
     trimUrl: "groupz-seven.vercel.app",
     repo: "https://github.com/DataFright/Groupz",
@@ -11,6 +12,36 @@ const projects = [
     type: "Focus Type: SPA with stateless request boundaries",
     status: "Live and fully deployed",
     preview: "https://image.thum.io/get/width/900/noanimate/https://groupz-seven.vercel.app/",
+    structure: `Groupz/
+|-- .github/workflows/      # ci.yml (lint + unit tests), e2e.yml (post-deploy Cypress)
+|-- docs/                   # architecture, mobile, protocol, testing, deployment, benchmarks, scaling
+|-- docker-compose.yml
+|-- server/
+|   |-- src/
+|   |   |-- app.js          # Express routes + Socket.IO event handlers (createApp factory)
+|   |   |-- helpers.js      # validateInput, generateCode, buildMemberList, ALLOWED_ICONS
+|   |   |-- errorCodes.js   # ErrorCode constants, ErrorStatus map, makeError()
+|   |   \-- metrics.js      # usage stats endpoint
+|   |-- tests/              # unit, smoke, function, integration, scenarios, cleanup, metrics
+|   |-- scripts/            # docker-smoke.js, load-test.js
+|   |-- Dockerfile
+|   \-- server.js
+\-- client/
+    |-- src/
+    |   |-- components/     # Home, GroupMap, MemberList, GroupCodeOverlay, IconPicker
+    |   |-- constants/      # icons.js
+    |   |-- styles/         # CSS Modules (App, GroupMap, Home, IconPicker, MemberList, global)
+    |   |-- tests/          # smoke, unit (Home, GroupCodeOverlay, IconPicker, GroupMap), integration
+    |   |-- App.jsx         # view router, socket event handlers, notification banner
+    |   |-- socket.js       # singleton socket.io-client instance
+    |   |-- errorCodes.js   # mirrors server error codes
+    |   \-- main.jsx
+    |-- cypress/
+    |   |-- e2e/            # 17 spec files (105 tests)
+    |   \-- support/        # commands.js, e2e.js
+    |-- scripts/
+    |   \-- cypress-run.cjs # VS Code-safe Cypress launcher (strips ELECTRON_RUN_AS_NODE)
+    \-- cypress.config.cjs  # Cypress config + cy.task() socket helpers`,
     sections: [
       {
         title: "Concept",
@@ -50,6 +81,7 @@ const projects = [
   },
   {
     name: "Screenr",
+    annotation: "SECTION B2.1 : PROJECT_2",
     url: "https://screenr-iota.vercel.app/",
     trimUrl: "screenr-iota.vercel.app",
     repo: "https://github.com/DataFright/Screenr",
@@ -57,6 +89,42 @@ const projects = [
     type: "Focus Type: modern web app with PWA-ready patterns",
     status: "Live and fully deployed",
     preview: "/previews/screenr-dark.png?v=20260707",
+    structure: `screenr/
+|-- src/
+|   |-- app/
+|   |   |-- api/
+|   |   |   |-- grade/route.ts      # Resume grading endpoint
+|   |   |   \-- health/route.ts     # Health check endpoint
+|   |   |-- page.tsx                # Main application page
+|   |   |-- layout.tsx              # Root layout with providers
+|   |   |-- loading.tsx             # Loading skeleton
+|   |   |-- error.tsx               # Error boundary page
+|   |   \-- not-found.tsx           # 404 page
+|   |-- components/
+|   |   |-- ui/                     # shadcn/ui components
+|   |   |-- theme-provider.tsx      # Theme context provider
+|   |   |-- theme-toggle.tsx        # Dark mode toggle
+|   |   \-- error-boundary.tsx      # Error handling components
+|   |-- hooks/
+|   |   |-- use-toast.ts            # Toast notification hook
+|   |   \-- use-mobile.ts           # Mobile detection hook
+|   \-- lib/
+|       |-- errors.ts               # Custom error classes
+|       \-- utils.ts                # Utility functions
+|-- cypress/
+|   |-- e2e/                        # E2E test suites (9 specs, 70 tests)
+|   |-- fixtures/                   # Test data and resume PDFs
+|   \-- support/                    # Cypress support files
+|-- tests/
+|   |-- api/                        # API test suites (13 suites)
+|   |-- load/                       # Load test runner
+|   |-- scripts/                    # Test utility scripts
+|   |-- fixtures/                   # Test PDFs including fake PDFs
+|   \-- reports/                    # Current verification reports
+|-- public/
+|   |-- favicon.svg                 # Custom Screenr favicon
+|   \-- sitemap.xml                 # SEO sitemap
+\-- proxy.ts                        # Rate limiting + test mode bypass`,
     sections: [
       {
         title: "Concept",
@@ -152,6 +220,7 @@ function ProjectCard({ project }) {
   return (
     <article className="card reveal">
       <a className="preview-link" href={project.url} target="_blank" rel="noreferrer">
+        <p className="section-tag section-tag--project">{project.annotation}</p>
         <img className="preview" src={project.preview} alt={`Preview of ${project.trimUrl}`} loading="lazy" />
       </a>
       <div className="card-body">
@@ -164,11 +233,16 @@ function ProjectCard({ project }) {
         </div>
         <div className="meta-links">
           <a className="action" href={project.url} target="_blank" rel="noreferrer">
-            Visit site
+            Visit Site
           </a>
           <a className="action secondary" href={project.repo} target="_blank" rel="noreferrer">
-            View repo
+            View Repo
           </a>
+        </div>
+
+        <div className="detail structure-block">
+          <h3>Project Structure</h3>
+          <pre className="structure-tree">{project.structure}</pre>
         </div>
 
         <div className="detail open">
@@ -222,6 +296,20 @@ function App() {
 
   return (
     <main className="page">
+      <aside className="left-rail" aria-label="Blueprint side notes">
+        <p className="rail-text rail-text--prod">PRODUCTION READY</p>
+        <p className="rail-text rail-text--self">_SELF TAUGHT</p>
+        <p className="rail-text rail-text--formula">d = sqrt((x_2 - x_1)^2 + (y_2 - y_1)^2)</p>
+        <p className="rail-text rail-text--circa">CIRCA2026</p>
+
+        <div className="rail-scale" aria-hidden="true">
+          <span className="rail-scale-line" />
+          <span className="rail-scale-label">72 px</span>
+        </div>
+
+        <p className="rail-text rail-text--live">PROJECT_01+02=LIVE</p>
+      </aside>
+
       <header className="hero">
         <h1>Matthew Swaney</h1>
         <p className="subhead">
@@ -232,6 +320,7 @@ function App() {
 
       <section className="intro-grid" aria-label="Profile">
         <article className="intro-card">
+          <p className="section-tag section-tag--container">SECTION A-A : ABOUT</p>
           <h2>Matthew Swaney</h2>
           <p className="intro-line">Bentonville, AR, USA</p>
           <p>
@@ -278,6 +367,7 @@ function App() {
       </section>
 
       <section className="framework" aria-label="Personal methodology">
+        <p className="section-tag section-tag--container">SECTION C-00 : ARCHITECTURE</p>
         <div className="framework-head">
           <p className="eyebrow">Personal Methodology</p>
           <h2>From Idea to Delivery</h2>

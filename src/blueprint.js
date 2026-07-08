@@ -67,19 +67,20 @@ export function distribute(totalSpan, count, gap = 1) {
 // section's own subgrid (column 1 = first column of the section).
 
 function makeDesktop() {
-  const columns      = 56
-  const contentSpan  = 52       // 56 − 2 left cells − 2 right cells
-  const contentStart = 3        // first page column of content area
+  const columns      = 58
+  const contentSpan  = 56       // 58 − 1 left cell − 1 right cell
+  const contentStart = 2        // first page column of content area
 
-  // Intro: [31 about][1 gap][20 contact] = 52 ✓
-  const introMainCells    = 31
-  const introContactCells = 20
+  // Intro: [33 about][1 gap][22 contact] = 56 ✓
+  const introMainCells    = 33
+  const introContactCells = 22
   const introGap          = contentSpan - introMainCells - introContactCells   // 1
-  const introContactStart = introMainCells + introGap + 1                       // 33
+  const introContactStart = introMainCells + introGap + 1                       // 35
 
   // Projects: [25][2 gap][25] = 52 ✓
   const { itemSpan: projCells, starts: [pLeft, pRight] } = distribute(contentSpan, 2, 2)
 
+  // Keep Methodology containers balanced as width grows.
   const frameworkInnerSpan = contentSpan - 2
 
   // Framework inner area: [16][1 gap][16][1 gap][16] = 50 ✓
@@ -88,7 +89,7 @@ function makeDesktop() {
   return {
     name: 'desktop',
     columns,
-    pad: { top: 3, bottom: 4 },
+    pad: { top: 2, bottom: 4 },
     hero:    { start: contentStart, span: 40 },
     intro: {
       start: contentStart, span: contentSpan,

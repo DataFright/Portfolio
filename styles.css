@@ -13,34 +13,34 @@
   --radius: 0;
 
   /* ── Blueprint geometry — fallback values (overridden by blueprint.js) ── */
-  --layout-columns: 56;
-  --layout-top-pad-cells: 3;
+  --layout-columns: 58;
+  --layout-top-pad-cells: 2;
   --layout-bottom-pad-cells: 4;
   --page-margin-left: 0px;
   --foreground-drift-y: 0px;
 
-  --hero-start: 3;
+  --hero-start: 2;
   --hero-cells: 40;
 
-  --intro-start: 3;
-  --intro-span-cells: 52;
+  --intro-start: 2;
+  --intro-span-cells: 56;
   --intro-main-start: 1;
-  --intro-main-cells: 31;
-  --intro-contact-start: 33;
-  --intro-contact-cells: 20;
+  --intro-main-cells: 33;
+  --intro-contact-start: 35;
+  --intro-contact-cells: 22;
 
-  --projects-start: 3;
-  --projects-span-cells: 52;
+  --projects-start: 2;
+  --projects-span-cells: 56;
   --project-left-start: 1;
-  --project-right-start: 28;
-  --project-card-cells: 25;
+  --project-right-start: 30;
+  --project-card-cells: 27;
 
-  --framework-start: 3;
-  --framework-span-cells: 52;
+  --framework-start: 2;
+  --framework-span-cells: 56;
   --framework-col-1-start: 1;
   --framework-col-2-start: 19;
   --framework-col-3-start: 37;
-  --framework-card-cells: 16;
+  --framework-card-cells: 17;
   --framework-head-cells: 30;
   --contact-label-cells: 3;
   --preview-height-cells: 15;
@@ -133,6 +133,7 @@ body {
 /* Layout */
 /* -------------------------------------------------------------------------- */
 .page {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(var(--layout-columns), var(--grid-unit));
   width: var(--page-span);
@@ -147,6 +148,7 @@ body {
 
 .hero {
   grid-column: var(--hero-start) / span var(--hero-cells);
+  padding-bottom: calc(var(--grid-unit) * 0.5);
 }
 
 .intro-grid {
@@ -246,6 +248,97 @@ h2 {
   font-size: 0.92rem;
 }
 
+.section-tag {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  font-size: 0.8rem;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.32;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.section-tag--container {
+  top: calc(var(--grid-unit) * -0.96);
+  left: calc(var(--grid-unit) * 1.08);
+}
+
+.section-tag--project {
+  top: calc(var(--grid-unit) * -0.96);
+  left: calc(var(--grid-unit) * 1.08);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Left rail notes                                                             */
+/* -------------------------------------------------------------------------- */
+.left-rail {
+  position: absolute;
+  left: calc(var(--grid-unit) * -6.5);
+  top: 0;
+  bottom: 0;
+  width: 0;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+.rail-text,
+.rail-scale {
+  position: relative;
+  transform: rotate(-90deg);
+  transform-origin: left center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.25;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.rail-text--prod {
+  top: auto;
+}
+
+.rail-text--self {
+  top: auto;
+}
+
+.rail-text--circa {
+  top: auto;
+}
+
+.rail-scale {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--grid-unit) * 0.5);
+}
+
+.rail-scale-line {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: calc(var(--grid-unit) * 3);
+  height: 0;
+  border-top: 2px solid currentColor;
+  opacity: 0.95;
+}
+
+.rail-scale-label {
+  line-height: 1;
+}
+
+.rail-text--live {
+  top: auto;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Intro + contact */
 /* -------------------------------------------------------------------------- */
@@ -327,7 +420,7 @@ h2 {
     linear-gradient(var(--panel-grid-major) 1px, transparent 1px),
     linear-gradient(90deg, var(--panel-grid-major) 1px, transparent 1px);
   box-shadow: 0 22px 32px -26px #000000db;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   transition: box-shadow 220ms ease;
@@ -338,6 +431,7 @@ h2 {
 }
 
 .preview-link {
+  position: relative;
   display: block;
   block-size: var(--preview-height);
   border-bottom: 1px solid var(--ring);
@@ -352,6 +446,14 @@ h2 {
 
 .card-body {
   padding: var(--space-1);
+}
+
+.intro-card .section-tag,
+.framework .section-tag,
+.preview-link .section-tag {
+  font-size: 0.8rem;
+  color: var(--accent);
+  line-height: 1;
 }
 
 .chip-row {
@@ -380,8 +482,19 @@ h2 {
 .meta-links {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
-  margin: var(--space-1) 0;
+  gap: 0;
+  margin: calc(var(--grid-unit) * 0.85) 0 calc(var(--grid-unit) * 0.85);
+}
+
+.meta-links .action + .action::before {
+  content: '/';
+  margin-right: calc(var(--grid-unit) * 0.5);
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+.meta-links .action + .action {
+  margin-left: calc(var(--grid-unit) * 0.5);
 }
 
 .action {
@@ -392,7 +505,7 @@ h2 {
 }
 
 .secondary {
-  color: #bde2ff;
+  color: var(--accent);
 }
 
 .action:hover {
@@ -405,6 +518,28 @@ h2 {
   opacity: 1;
   max-height: none;
   overflow: visible;
+}
+
+.detail.structure-block {
+  padding-top: 0;
+}
+
+.detail.structure-block h3 {
+  margin-top: 0;
+  color: #c7e4ff;
+}
+
+.structure-tree {
+  margin: 0;
+  padding: var(--space-1);
+  border: 1px solid #8fcbff33;
+  background: #081727bf;
+  color: #d5eaff;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  white-space: pre;
+  overflow-x: auto;
 }
 
 .detail h3 {
@@ -527,6 +662,10 @@ h2 {
 
 /* Visual adjustments at small sizes (not layout-affecting) */
 @media (max-width: 768px) {
+  .left-rail {
+    display: none;
+  }
+
   .detail p,
   .detail ul,
   .framework-card ul {
