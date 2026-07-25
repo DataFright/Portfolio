@@ -7,7 +7,20 @@
     "dev": "vite",
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tracking:bootstrap": "node scripts/tracking-bootstrap.mjs",
+    "tracking:worker:login": "cmd.exe /c npx wrangler login",
+    "tracking:worker:d1:create": "cmd.exe /c npx wrangler d1 create portfolio_tracker",
+    "tracking:worker:d1:migrate": "cmd.exe /c \"echo y| npx wrangler d1 execute portfolio_tracker --remote --file=tracking-worker/schema.sql --config=tracking-worker/wrangler.toml\"",
+    "tracking:worker:secret:token": "cmd.exe /c npx wrangler secret put ADMIN_TOKEN --config=tracking-worker/wrangler.toml",
+    "tracking:worker:secret:code": "cmd.exe /c npx wrangler secret put ADMIN_CODE --config=tracking-worker/wrangler.toml",
+    "tracking:worker:deploy": "cmd.exe /c npx wrangler deploy --config=tracking-worker/wrangler.toml",
+    "tracking:summary": "node scripts/tracking-query.mjs summary",
+    "tracking:recent": "node scripts/tracking-query.mjs recent",
+    "tracking:candidates": "node scripts/tracking-query.mjs candidates",
+    "tracking:daily": "node scripts/tracking-query.mjs daily",
+    "tracking:report": "node scripts/tracking-query.mjs report",
+    "tracking:export": "node scripts/tracking-query.mjs export"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -16,6 +29,7 @@
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@vitejs/plugin-react": "^4.3.1",
-    "vite": "^5.4.10"
+    "vite": "^5.4.10",
+    "wrangler": "^4.114.0"
   }
 }

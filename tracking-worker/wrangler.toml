@@ -1,0 +1,17 @@
+name = "portfolio-tracker"
+main = "src/index.js"
+compatibility_date = "2026-07-25"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio_tracker"
+database_id = "7bf8b2db-d0f9-4454-8dbf-11208751f10e"
+
+[vars]
+ALLOWED_ORIGIN = "https://your-portfolio-domain.com"
+RATE_LIMIT_PER_MIN = "90"
+MAX_EVENT_AGE_MS = "900000"
+MAX_FUTURE_SKEW_MS = "120000"
+
+[triggers]
+crons = ["15 0 * * *"]

@@ -1,5 +1,6 @@
-import { useLayoutEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { snapVertical } from './blueprint.js'
+import { startEngagementTracking } from './tracking/visitorTracker.js'
 
 const projects = [
   {
@@ -269,6 +270,11 @@ function ProjectCard({ project }) {
 }
 
 function App() {
+  useEffect(() => {
+    const stop = startEngagementTracking()
+    return stop
+  }, [])
+
   useLayoutEffect(() => {
     let resizeFrame = 0
 
