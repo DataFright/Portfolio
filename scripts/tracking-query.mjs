@@ -33,12 +33,14 @@ loadTrackingEnvFile()
 const BASE_URL = process.env.TRACKING_ADMIN_URL
 const TOKEN = process.env.TRACKING_ADMIN_TOKEN
 const CODE = process.env.TRACKING_ADMIN_CODE
+const OWNER_TIMEZONE = process.env.TRACKING_OWNER_TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
 function usage() {
   console.log(`Usage:
   node scripts/tracking-query.mjs summary [--days=7]
   node scripts/tracking-query.mjs recent [--limit=50]
   node scripts/tracking-query.mjs candidates [--days=14] [--limit=25]
+  node scripts/tracking-query.mjs visits [--days=14] [--limit=50]
   node scripts/tracking-query.mjs daily [--days=30]
   node scripts/tracking-query.mjs report [--days=14] [--limit=15]
   node scripts/tracking-query.mjs export [--since=2026-07-01T00:00:00.000Z] [--until=2026-07-25T23:59:59.000Z] [--limit=250]
@@ -47,6 +49,8 @@ Required env vars:
   TRACKING_ADMIN_URL=https://your-worker-domain.workers.dev
   TRACKING_ADMIN_TOKEN=...
   TRACKING_ADMIN_CODE=...
+Optional env vars:
+  TRACKING_OWNER_TIMEZONE=America/Chicago
 
 If those are not exported, this script also reads ./tracking.env automatically.
 `)
@@ -96,6 +100,29 @@ function shortDate(ts) {
   const d = new Date(Number(ts))
   if (!Number.isFinite(d.getTime())) return '-'
   return d.toISOString().replace('T', ' ').slice(0, 16)
+}
+
+function formatInTimezone(ts, timezone) {
+  if (!ts) return '-'
+  const d = new Date(Number(ts))
+  if (!Number.isFinite(d.getTime())) return '-'
+
+  const tz = timezone || 'UTC'
+  try {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    })
+    return fmt.format(d).replace(',', '')
+  } catch {
+    return shortDate(ts)
+  }
 }
 
 function toNumber(v, fallback = 0) {
@@ -152,6 +179,134 @@ function printRecruiterReport(data, days, limit) {
   })
 }
 
+function printSummaryReport(data, days) {
+  const totals = data?.totals || {}
+  const bots = Array.isArray(data?.botBreakdown) ? data.botBreakdown : []
+  const networks = Array.isArray(data?.topNetworks) ? data.topNetworks : []
+  const candidates = Array.isArray(data?.candidateSignals) ? data.candidateSignals : []
+
+  console.log(`Tracking Summary (${days}d)`)
+  console.log(`Generated: ${data?.generatedAt || '-'}\n`)
+
+  console.log(`Events: ${toNumber(totals.event_count, 0)}`)
+  console.log(`Sessions: ${toNumber(totals.session_count, 0)}`)
+  console.log(`Visitors: ${toNumber(totals.visitor_count, 0)}`)
+  console.log(`Average bot score: ${toNumber(totals.avg_bot_score, 0)}\n`)
+
+  if (bots.length) {
+    console.log('Bot Breakdown:')
+    bots.forEach(row => {
+      console.log(`- ${row.bot_class}: ${toNumber(row.hits, 0)}`)
+    })
+    console.log('')
+  }
+
+  if (networks.length) {
+    console.log('Top Networks:')
+    networks.forEach(row => {
+      console.log(`- ${row.as_org || '-'} (ASN ${toNumber(row.asn, 0)}): ${toNumber(row.hits, 0)} hits`)
+    })
+    console.log('')
+  }
+
+  if (candidates.length) {
+    console.log('Top Candidate Signals:')
+    candidates.slice(0, 5).forEach(row => {
+      console.log(`- score ${toNumber(row.interest_score, 0)} | ${row.interest_band || '-'} | ${row.as_org || '-'} | ${row.country || '-'} ${row.region || '-'} | last ${shortDate(row.last_seen)} UTC`)
+    })
+  } else {
+    console.log('Top Candidate Signals: none yet')
+  }
+}
+
+function printDailyReport(data, days) {
+  const rows = Array.isArray(data?.results) ? data.results : []
+  console.log(`Daily Rollups (${days}d)`)
+  console.log(`Generated: ${data?.generatedAt || '-'}\n`)
+
+  if (!rows.length) {
+    console.log('No daily rollups found in the selected window.')
+    return
+  }
+
+  const header = [
+    pad('day', 10),
+    pad('events', 8),
+    pad('visitors', 8),
+    pad('sessions', 8),
+    pad('human', 8),
+    pad('bot', 8),
+    pad('uncertain', 10),
+    pad('avg_bot', 8),
+  ].join(' | ')
+
+  console.log(header)
+  console.log('-'.repeat(header.length))
+
+  rows.forEach(row => {
+    console.log([
+      pad(row.day_key || '-', 10),
+      pad(toNumber(row.event_count, 0), 8),
+      pad(toNumber(row.visitor_count, 0), 8),
+      pad(toNumber(row.session_count, 0), 8),
+      pad(toNumber(row.likely_human_events, 0), 8),
+      pad(toNumber(row.likely_bot_events, 0), 8),
+      pad(toNumber(row.uncertain_events, 0), 10),
+      pad(toNumber(row.avg_bot_score, 0), 8),
+    ].join(' | '))
+  })
+}
+
+function printVisitIntelReport(data, days, limit) {
+  const rows = Array.isArray(data?.results) ? data.results : []
+  console.log(`Visit Intel Report (${days}d, top ${limit} sessions)`) 
+  console.log(`Generated: ${data?.generatedAt || '-'}\n`)
+  console.log(`Owner timezone for local view: ${OWNER_TIMEZONE}\n`)
+
+  if (!rows.length) {
+    console.log('No visits found in the selected window.')
+    return
+  }
+
+  const header = [
+    pad('when_utc', 16),
+    pad('visitor_local_time', 19),
+    pad('owner_local_time', 19),
+    pad('person_bot', 11),
+    pad('visitor_key', 24),
+    pad('affiliation', 28),
+    pad('network', 16),
+    pad('vpn?', 5),
+    pad('device', 12),
+    pad('location', 20),
+  ].join(' | ')
+
+  console.log(header)
+  console.log('-'.repeat(header.length))
+
+  rows.forEach(row => {
+    const location = [row.country, row.region, row.city].filter(Boolean).join('/') || '-'
+    const visitorTime = formatInTimezone(row.ts, row.timezone)
+    const ownerTime = formatInTimezone(row.ts, OWNER_TIMEZONE)
+    const line = [
+      pad(shortDate(row.ts), 16),
+      pad(visitorTime, 19),
+      pad(ownerTime, 19),
+      pad(row.bot_class || '-', 11),
+      pad(row.visitor_key || row.visitor_id || '-', 24),
+      pad((row.as_org || '-').replace(/\s+/g, ' '), 28),
+      pad(row.network_type || '-', 16),
+      pad(row.vpn_suspected ? 'yes' : 'no', 5),
+      pad(row.device_type || '-', 12),
+      pad(location, 20),
+    ].join(' | ')
+    console.log(line)
+    if (Array.isArray(row.bot_reasons) && row.bot_reasons.length) {
+      console.log(`  bot_reasons: ${row.bot_reasons.join(', ')}`)
+    }
+  })
+}
+
 async function main() {
   const { command, options } = parseArgs(process.argv.slice(2))
 
@@ -168,7 +323,11 @@ async function main() {
   if (command === 'summary') {
     const days = options.days || '7'
     const data = await request(`/admin/summary?days=${encodeURIComponent(days)}`)
-    printJson(data)
+    if (options.json === '1' || options.json === 'true') {
+      printJson(data)
+    } else {
+      printSummaryReport(data, days)
+    }
     return
   }
 
@@ -198,10 +357,22 @@ async function main() {
     return
   }
 
+  if (command === 'visits') {
+    const days = options.days || '14'
+    const limit = options.limit || '50'
+    const data = await request(`/admin/visits?days=${encodeURIComponent(days)}&limit=${encodeURIComponent(limit)}`)
+    printVisitIntelReport(data, days, limit)
+    return
+  }
+
   if (command === 'daily') {
     const days = options.days || '30'
     const data = await request(`/admin/daily?days=${encodeURIComponent(days)}`)
-    printJson(data)
+    if (options.json === '1' || options.json === 'true') {
+      printJson(data)
+    } else {
+      printDailyReport(data, days)
+    }
     return
   }
 

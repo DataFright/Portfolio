@@ -1,5 +1,8 @@
 const BOT_UA_PATTERN = /(bot|spider|crawler|slurp|wget|curl|headless|python-requests|go-http-client|ahrefs|semrush|bytespider|dataprovider)/i
 const KNOWN_HIRING_NETWORK_PATTERN = /(amazon|microsoft|google|meta|apple|netflix|cloudflare|github|linkedin|indeed|glassdoor|salesforce|oracle|walmart|accenture|deloitte|ibm)/i
+const DATACENTER_NETWORK_PATTERN = /(amazon|aws|google cloud|microsoft|azure|digitalocean|linode|ovh|oracle cloud|cloudflare|vultr|choopa|alibaba cloud|hetzner)/i
+const RESIDENTIAL_NETWORK_PATTERN = /(communications|telecom|broadband|cable|fiber|wireless|mobile|xfinity|spectrum|charter|cox|comcast|verizon|at&t|centurylink|isp)/i
+const VPN_HINT_PATTERN = /(vpn|proxy|anonym|hosting|datacenter|cloud|server)/i
 const ALLOWED_EVENT_TYPES = new Set([
   'page_view',
   'scroll_depth',
@@ -20,10 +23,42 @@ function json(data, status = 200, headers = {}) {
   })
 }
 
-function getCorsHeaders(origin, allowedOrigin) {
-  const safeOrigin = allowedOrigin || '*'
+function normalizeOrigin(value) {
+  if (typeof value !== 'string' || !value.trim()) return null
+  try {
+    const url = new URL(value.trim())
+    return url.origin
+  } catch {
+    return null
+  }
+}
+
+function getAllowedOrigins(env) {
+  const values = []
+  if (typeof env.ALLOWED_ORIGINS === 'string' && env.ALLOWED_ORIGINS.trim()) {
+    values.push(...env.ALLOWED_ORIGINS.split(','))
+  }
+  if (typeof env.ALLOWED_ORIGIN === 'string' && env.ALLOWED_ORIGIN.trim()) {
+    values.push(env.ALLOWED_ORIGIN)
+  }
+
+  return Array.from(new Set(values.map(normalizeOrigin).filter(Boolean)))
+}
+
+function isOriginAllowed(origin, allowedOrigins) {
+  if (!allowedOrigins.length) return true
+  const normalized = normalizeOrigin(origin)
+  if (!normalized) return false
+  return allowedOrigins.includes(normalized)
+}
+
+function getCorsHeaders(origin, allowedOrigins) {
+  const allowAll = !allowedOrigins.length
+  const allowed = isOriginAllowed(origin, allowedOrigins)
+  const allowOrigin = allowAll ? '*' : (allowed ? normalizeOrigin(origin) : 'null')
+
   return {
-    'Access-Control-Allow-Origin': allowedOrigin ? (origin === allowedOrigin ? allowedOrigin : 'null') : safeOrigin,
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Access-Code',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   }
@@ -70,35 +105,105 @@ function getRateLimitPerMinute(env) {
   return Math.max(20, Math.min(2000, toInt(env.RATE_LIMIT_PER_MIN, 90)))
 }
 
-function botScoreFromRequest(ua, payload) {
+function deviceTypeFromUa(ua, touchPoints) {
+  const text = (ua || '').toLowerCase()
+  if (/ipad|tablet/.test(text)) return 'tablet'
+  if (/iphone|android|mobile/.test(text)) return 'mobile'
+  if (toInt(touchPoints, 0) > 0 && /macintosh/.test(text)) return 'touch_desktop'
+  return 'desktop'
+}
+
+function classifyNetwork(asOrg) {
+  const org = String(asOrg || '').toLowerCase()
+  if (!org) {
+    return { networkType: 'unknown', vpnSuspected: 0 }
+  }
+  if (DATACENTER_NETWORK_PATTERN.test(org)) {
+    return { networkType: 'datacenter', vpnSuspected: 1 }
+  }
+  if (RESIDENTIAL_NETWORK_PATTERN.test(org)) {
+    return { networkType: 'residential', vpnSuspected: 0 }
+  }
+  if (VPN_HINT_PATTERN.test(org)) {
+    return { networkType: 'proxy_or_vpn', vpnSuspected: 1 }
+  }
+  return { networkType: 'corporate_or_unknown', vpnSuspected: 0 }
+}
+
+async function buildVisitorKey(payload, ua, ipHash) {
+  const base = [
+    ipHash,
+    cleanString(ua, 300) || '',
+    cleanString(payload?.timezone, 120) || '',
+    toInt(payload?.screen?.width, 0),
+    toInt(payload?.screen?.height, 0),
+    cleanString(payload?.language, 40) || '',
+  ].join('|')
+  return (await sha256Hex(base)).slice(0, 24)
+}
+
+function botAnalysisFromRequest(ua, payload) {
   let score = 0
+  const reasons = []
   const uaText = (ua || '').toLowerCase()
 
-  if (!ua) score += 25
-  if (BOT_UA_PATTERN.test(uaText)) score += 70
-  if (uaText.includes('headlesschrome')) score += 30
-  if (uaText.includes('phantomjs')) score += 30
-  if (uaText.includes('playwright')) score += 40
+  if (!ua) {
+    score += 25
+    reasons.push('no_user_agent')
+  }
+  if (BOT_UA_PATTERN.test(uaText)) {
+    score += 70
+    reasons.push('bot_pattern_in_ua')
+  }
+  if (uaText.includes('headlesschrome')) {
+    score += 30
+    reasons.push('headless_chrome')
+  }
+  if (uaText.includes('phantomjs')) {
+    score += 30
+    reasons.push('phantomjs_runtime')
+  }
+  if (uaText.includes('playwright')) {
+    score += 40
+    reasons.push('playwright_runtime')
+  }
 
   if ((payload.touchPoints || 0) === 0 && /mobile|android|iphone|ipad/i.test(ua || '')) {
     score += 15
+    reasons.push('mobile_ua_without_touch')
   }
 
-  if (!payload.language) score += 6
-  if (!payload.timezone) score += 10
+  if (!payload.language) {
+    score += 6
+    reasons.push('missing_language')
+  }
+  if (!payload.timezone) {
+    score += 10
+    reasons.push('missing_timezone')
+  }
 
   const eventType = String(payload.type || '').trim()
   if (eventType === 'session_end' && toInt(payload.engagedMs, 0) < 1200) {
     score += 8
+    reasons.push('very_short_session')
   }
 
   const engagedMs = toInt(payload.engagedMs, 0)
   const scrollMax = toInt(payload.scrollMax, 0)
 
-  if (engagedMs > 45000) score -= 15
-  if (scrollMax >= 50) score -= 10
+  if (engagedMs > 45000) {
+    score -= 15
+    reasons.push('long_engagement_human_signal')
+  }
+  if (scrollMax >= 50) {
+    score -= 10
+    reasons.push('deep_scroll_human_signal')
+  }
 
-  return Math.max(0, Math.min(100, score))
+  return {
+    score: Math.max(0, Math.min(100, score)),
+    reasons,
+  }
 }
 
 function classifyVisitor(score) {
@@ -238,6 +343,21 @@ async function insertEvent(env, event) {
     JSON.stringify(event.payload)
   ).run()
 
+  await env.DB.prepare(`
+    INSERT INTO event_enrichment (
+      event_id, visit_iso, visitor_key, device_type,
+      network_type, vpn_suspected, bot_reasons
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    event.id,
+    event.visitIso,
+    event.visitorKey,
+    event.deviceType,
+    event.networkType,
+    event.vpnSuspected,
+    JSON.stringify(event.botReasons || [])
+  ).run()
+
   const upsertSession = env.DB.prepare(`
     INSERT INTO sessions (
       session_id, visitor_id, ip_hash, first_seen, last_seen,
@@ -351,9 +471,14 @@ async function refreshRecentRollups(env, dayCount = 2) {
 
 async function handleCollect(request, env) {
   const origin = request.headers.get('Origin')
-  const cors = getCorsHeaders(origin, env.ALLOWED_ORIGIN)
+  const allowedOrigins = getAllowedOrigins(env)
+  const cors = getCorsHeaders(origin, allowedOrigins)
 
-  if (env.ALLOWED_ORIGIN && origin && origin !== env.ALLOWED_ORIGIN) {
+  if (allowedOrigins.length && !origin) {
+    return json({ ok: false, error: 'Missing origin header' }, 403, cors)
+  }
+
+  if (!isOriginAllowed(origin, allowedOrigins)) {
     return json({ ok: false, error: 'Origin not allowed' }, 403, cors)
   }
 
@@ -400,16 +525,21 @@ async function handleCollect(request, env) {
     })
   }
 
-  const botScore = botScoreFromRequest(ua, payload)
+  const botAnalysis = botAnalysisFromRequest(ua, payload)
+  const botScore = botAnalysis.score
   const botClass = classifyVisitor(botScore)
+  const network = classifyNetwork(request.cf?.asOrganization)
+  const visitorKey = await buildVisitorKey(payload, ua, ipHash)
 
   const event = {
     id: crypto.randomUUID(),
     ts: incomingTs,
+    visitIso: new Date(incomingTs).toISOString(),
     eventType,
     siteKey: cleanString(payload.siteKey, 80) || 'portfolio',
     visitorId,
     sessionId,
+    visitorKey,
     ipHash,
     country: request.cf?.country || null,
     region: request.cf?.regionCode || request.cf?.region || null,
@@ -418,6 +548,10 @@ async function handleCollect(request, env) {
     asn: toInt(request.cf?.asn, 0),
     asOrg: cleanString(request.cf?.asOrganization, 180),
     ua: cleanString(ua, 500),
+    deviceType: deviceTypeFromUa(ua, payload.touchPoints),
+    networkType: network.networkType,
+    vpnSuspected: network.vpnSuspected,
+    botReasons: botAnalysis.reasons,
     botScore,
     botClass,
     referrer: cleanString(payload.referrer, 500),
@@ -631,6 +765,55 @@ async function handleCandidates(request, env) {
   })
 }
 
+async function handleVisits(request, env) {
+  const authError = requireAdminAuth(request, env)
+  if (authError) return json({ ok: false, error: authError }, 401)
+
+  const { searchParams } = new URL(request.url)
+  const days = Math.max(1, Math.min(90, toInt(searchParams.get('days'), 14)))
+  const limit = Math.max(1, Math.min(200, toInt(searchParams.get('limit'), 50)))
+  const sinceTs = Date.now() - days * 24 * 60 * 60 * 1000
+
+  const rows = await env.DB.prepare(`
+    WITH filtered AS (
+      SELECT
+        e.id, e.ts, e.event_type, e.site_key, e.visitor_id, e.session_id, e.ip_hash,
+        e.country, e.region, e.city, e.timezone, e.asn, e.as_org,
+        e.ua, e.bot_score, e.bot_class, e.referrer, e.path, e.page_url,
+        e.scroll_max, e.engaged_ms,
+        x.visit_iso, x.visitor_key, x.device_type, x.network_type, x.vpn_suspected, x.bot_reasons
+      FROM events e
+      LEFT JOIN event_enrichment x ON x.event_id = e.id
+      WHERE e.ts >= ?
+    ),
+    latest AS (
+      SELECT session_id, MAX(ts) AS max_ts
+      FROM filtered
+      GROUP BY session_id
+    )
+    SELECT f.*
+    FROM filtered f
+    JOIN latest l
+      ON l.session_id = f.session_id
+     AND l.max_ts = f.ts
+    ORDER BY f.ts DESC
+    LIMIT ?
+  `).bind(sinceTs, limit).all()
+
+  const results = (rows.results || []).map(row => ({
+    ...row,
+    bot_reasons: row.bot_reasons ? JSON.parse(row.bot_reasons) : [],
+  }))
+
+  return json({
+    ok: true,
+    windowDays: days,
+    limit,
+    generatedAt: new Date().toISOString(),
+    results,
+  })
+}
+
 async function handleExport(request, env) {
   const authError = requireAdminAuth(request, env)
   if (authError) return json({ ok: false, error: authError }, 401)
@@ -646,20 +829,27 @@ async function handleExport(request, env) {
       country, region, city, timezone, asn, as_org,
       ua, bot_score, bot_class, referrer, path, page_url,
       scroll_max, engaged_ms, viewport_w, viewport_h, screen_w, screen_h,
+      x.visit_iso, x.visitor_key, x.device_type, x.network_type, x.vpn_suspected, x.bot_reasons,
       payload_json
     FROM events
+    LEFT JOIN event_enrichment x ON x.event_id = events.id
     WHERE ts BETWEEN ? AND ?
     ORDER BY ts DESC
     LIMIT ?
   `).bind(since, until, limit).all()
+
+  const results = (rows.results || []).map(row => ({
+    ...row,
+    bot_reasons: row.bot_reasons ? JSON.parse(row.bot_reasons) : [],
+  }))
 
   return json({
     ok: true,
     since,
     until,
     limit,
-    count: (rows.results || []).length,
-    results: rows.results || [],
+    count: results.length,
+    results,
   })
 }
 
@@ -668,7 +858,7 @@ export default {
     const url = new URL(request.url)
     const method = request.method.toUpperCase()
     const origin = request.headers.get('Origin')
-    const cors = getCorsHeaders(origin, env.ALLOWED_ORIGIN)
+    const cors = getCorsHeaders(origin, getAllowedOrigins(env))
 
     if (method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: cors })
@@ -696,6 +886,10 @@ export default {
 
     if (method === 'GET' && url.pathname === '/admin/candidates') {
       return handleCandidates(request, env)
+    }
+
+    if (method === 'GET' && url.pathname === '/admin/visits') {
+      return handleVisits(request, env)
     }
 
     if (method === 'GET' && url.pathname === '/health') {

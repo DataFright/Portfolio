@@ -65,6 +65,20 @@ CREATE TABLE IF NOT EXISTS ingest_rate_limit (
 
 CREATE INDEX IF NOT EXISTS idx_ingest_rate_limit_updated_at ON ingest_rate_limit(updated_at);
 
+CREATE TABLE IF NOT EXISTS event_enrichment (
+  event_id TEXT PRIMARY KEY,
+  visit_iso TEXT NOT NULL,
+  visitor_key TEXT,
+  device_type TEXT,
+  network_type TEXT,
+  vpn_suspected INTEGER NOT NULL DEFAULT 0,
+  bot_reasons TEXT,
+  FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_event_enrichment_visitor_key ON event_enrichment(visitor_key);
+CREATE INDEX IF NOT EXISTS idx_event_enrichment_network_type ON event_enrichment(network_type);
+
 CREATE TABLE IF NOT EXISTS daily_rollups (
   day_key TEXT PRIMARY KEY,
   event_count INTEGER NOT NULL DEFAULT 0,

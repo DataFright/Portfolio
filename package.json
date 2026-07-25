@@ -18,6 +18,7 @@
     "tracking:summary": "node scripts/tracking-query.mjs summary",
     "tracking:recent": "node scripts/tracking-query.mjs recent",
     "tracking:candidates": "node scripts/tracking-query.mjs candidates",
+    "tracking:visits": "node scripts/tracking-query.mjs visits",
     "tracking:daily": "node scripts/tracking-query.mjs daily",
     "tracking:report": "node scripts/tracking-query.mjs report",
     "tracking:export": "node scripts/tracking-query.mjs export"

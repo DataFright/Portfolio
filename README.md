@@ -150,6 +150,11 @@ This repo now includes private visitor intelligence plumbing that does not rende
 - ASN and network org where available
 - User-Agent and bot/human score
 - Engagement metrics: time on page, max scroll depth, repeat sessions
+- Visit timestamp in UTC (`visit_iso`)
+- Stable visitor key hash (`visitor_key`) for repeat-identification without personal name data
+- Device classification (`desktop`, `mobile`, `tablet`, `touch_desktop`)
+- Network classification (`residential`, `datacenter`, `proxy_or_vpn`, `corporate_or_unknown`)
+- VPN/proxy suspicion flag and bot-reason signals
 
 ### Backend hardening controls
 
@@ -190,16 +195,25 @@ Copy values from [tracking.env.example](tracking.env.example) into local `tracki
 
 The query script auto-loads `tracking.env`, so you do not need to export variables manually each terminal session.
 
+Optional parser setting in `tracking.env`:
+
+- `TRACKING_OWNER_TIMEZONE` (example: `America/Chicago`) for owner-local time display in visit reports.
+
 Run:
 
 ```bash
 npm run tracking:summary -- --days=7
 npm run tracking:recent -- --limit=50
 npm run tracking:candidates -- --days=14 --limit=25
+npm run tracking:visits -- --days=14 --limit=50
 npm run tracking:daily -- --days=30
 npm run tracking:report -- --days=14 --limit=15
 npm run tracking:export -- --since=2026-07-01T00:00:00.000Z --until=2026-07-25T23:59:59.000Z --limit=250
 ```
+
+`tracking:summary`, `tracking:daily`, and `tracking:visits` now use a parser-style terminal layout for easier reading.
+
+If you need raw JSON output for automation, add `--json=true` to `tracking:summary` or `tracking:daily`.
 
 `tracking:report` prints a concise recruiter-signal table (score, human confidence, org/geo, engagement, and repeat visits) for fast terminal review.
 

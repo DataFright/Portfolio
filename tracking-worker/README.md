@@ -25,6 +25,7 @@ This service is separate from your site UI. The frontend sends background events
 - `POST /collect` - event ingestion from portfolio frontend
 - `GET /admin/summary?days=7` - private summary
 - `GET /admin/candidates?days=14&limit=25` - ranked likely-human candidate signals
+- `GET /admin/visits?days=14&limit=50` - session-level visit intelligence with identifiers, device, network, vpn suspicion, and bot reasons
 - `GET /admin/daily?days=30` - daily aggregate rollups
 - `POST /admin/rollup?day=YYYY-MM-DD` - force-refresh one day rollup
 - `GET /admin/export?since=...&until=...&limit=250` - private raw export
