@@ -1,10 +1,33 @@
 const TRACKING_ENDPOINT = (import.meta.env.VITE_TRACKING_ENDPOINT || '').trim()
 const SITE_KEY = (import.meta.env.VITE_TRACKING_SITE_KEY || 'portfolio').trim()
 
+const OWNER_FLAG_KEY = 'portfolio_owner_optout'
+
 let pageViewSent = false
 
 function nowMs() {
   return Date.now()
+}
+
+/**
+ * Suppress tracking for the site owner.
+ *
+ * Visiting the site once with ?owner=1 stores the flag permanently in this
+ * browser (?owner=0 clears it). Owner visits are by far the highest-engagement
+ * sessions in the data, so leaving them in buries real traffic in the reports.
+ * This drops them at the source; OWNER_ASN in the Worker is the network-level
+ * backstop for browsers that never got the flag.
+ */
+function isOwnerVisit() {
+  try {
+    const flag = new URLSearchParams(window.location.search).get('owner')
+    if (flag === '1') localStorage.setItem(OWNER_FLAG_KEY, '1')
+    else if (flag === '0') localStorage.removeItem(OWNER_FLAG_KEY)
+    return localStorage.getItem(OWNER_FLAG_KEY) === '1'
+  } catch {
+    // Private mode or blocked storage — fall through and track normally.
+    return false
+  }
 }
 
 function getOrCreateVisitorId() {
@@ -58,6 +81,7 @@ function buildBaseEvent() {
 
 function postEvent(type, payload = {}, useBeacon = false) {
   if (!TRACKING_ENDPOINT) return
+  if (isOwnerVisit()) return
 
   const body = JSON.stringify({
     type,

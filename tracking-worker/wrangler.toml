@@ -10,6 +10,14 @@ database_id = "7bf8b2db-d0f9-4454-8dbf-11208751f10e"
 [vars]
 ALLOWED_ORIGIN = "https://www.matthew-swaney.com"
 ALLOWED_ORIGINS = "https://www.matthew-swaney.com,https://matthew-swaney.com"
+# Owner traffic is excluded from candidate rankings (not from raw visits/export,
+# which still show everything). 22773 = Cox Communications, the owner's ISP.
+# This is network-level and therefore blunt: a real visitor on the same ISP would
+# also be excluded from the rankings. The precise mechanism is the ?owner=1
+# localStorage flag in src/tracking/visitorTracker.js; this is the backstop.
+OWNER_ASN = "22773"
+# Optional regex (case-insensitive) matched against the ASN org name.
+OWNER_ORG_PATTERN = ""
 RATE_LIMIT_PER_MIN = "90"
 MAX_EVENT_AGE_MS = "900000"
 MAX_FUTURE_SKEW_MS = "120000"

@@ -1,8 +1,16 @@
 const BOT_UA_PATTERN = /(bot|spider|crawler|slurp|wget|curl|headless|python-requests|go-http-client|ahrefs|semrush|bytespider|dataprovider)/i
-const KNOWN_HIRING_NETWORK_PATTERN = /(amazon|microsoft|google|meta|apple|netflix|cloudflare|github|linkedin|indeed|glassdoor|salesforce|oracle|walmart|accenture|deloitte|ibm)/i
-const DATACENTER_NETWORK_PATTERN = /(amazon|aws|google cloud|microsoft|azure|digitalocean|linode|ovh|oracle cloud|cloudflare|vultr|choopa|alibaba cloud|hetzner)/i
+// Employer networks worth a scoring bonus. Deliberately excludes the big cloud
+// providers: an "as_org" of Microsoft/Google/Amazon almost always means Azure,
+// GCP or EC2 — a crawler's hosting provider — not someone browsing from a
+// corporate office. Rewarding those made every cloud scraper look like a
+// recruiter, which is exactly backwards.
+const KNOWN_HIRING_NETWORK_PATTERN = /(meta|apple|netflix|github|linkedin|indeed|glassdoor|salesforce|walmart|accenture|deloitte|ibm)/i
+const DATACENTER_NETWORK_PATTERN = /(amazon|aws|google cloud|google llc|microsoft|azure|digitalocean|linode|ovh|oracle cloud|cloudflare|vultr|choopa|alibaba cloud|alicloud|huawei cloud|tencent|contabo|hetzner|leaseweb|scaleway)/i
 const RESIDENTIAL_NETWORK_PATTERN = /(communications|telecom|broadband|cable|fiber|wireless|mobile|xfinity|spectrum|charter|cox|comcast|verizon|at&t|centurylink|isp)/i
 const VPN_HINT_PATTERN = /(vpn|proxy|anonym|hosting|datacenter|cloud|server)/i
+// Residential-proxy and scraping networks. Traffic here is rented consumer IPs
+// wearing a real browser UA, so it looks residential to every other heuristic.
+const SCRAPER_NETWORK_PATTERN = /(hostroyale|code200|oxylabs|brightdata|luminati|smartproxy|packethub|oculus networks|truview|contabo|dataprovider|fossick)/i
 const ALLOWED_EVENT_TYPES = new Set([
   'page_view',
   'scroll_depth',
@@ -118,6 +126,9 @@ function classifyNetwork(asOrg) {
   if (!org) {
     return { networkType: 'unknown', vpnSuspected: 0 }
   }
+  if (SCRAPER_NETWORK_PATTERN.test(org)) {
+    return { networkType: 'scraper_proxy', vpnSuspected: 1 }
+  }
   if (DATACENTER_NETWORK_PATTERN.test(org)) {
     return { networkType: 'datacenter', vpnSuspected: 1 }
   }
@@ -216,6 +227,41 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
+/**
+ * Is this session the site owner browsing their own portfolio?
+ *
+ * Configured via OWNER_ASN (comma-separated ASNs) and/or OWNER_ORG_PATTERN
+ * (a regex source string) in wrangler.toml. Without this every deep-scroll,
+ * long-engagement session the owner generates outranks real traffic and fills
+ * the candidate report with themselves.
+ */
+function isOwnerSession(session, env) {
+  const ownerAsns = String(env?.OWNER_ASN || '')
+    .split(',')
+    .map(v => toInt(v.trim(), 0))
+    .filter(Boolean)
+
+  if (ownerAsns.length && ownerAsns.includes(toInt(session.asn, 0))) return true
+
+  const pattern = String(env?.OWNER_ORG_PATTERN || '').trim()
+  if (pattern) {
+    try {
+      if (new RegExp(pattern, 'i').test(String(session.as_org || ''))) return true
+    } catch {
+      // An invalid pattern must not take the endpoint down.
+    }
+  }
+  return false
+}
+
+/**
+ * Rank how much a session looks like a real person evaluating the portfolio.
+ *
+ * Engagement alone is not evidence of interest: a datacenter crawler holding a
+ * headless tab open for 30s scores the same as a human reading for 30s. The
+ * network the session arrived on is therefore applied as a multiplier-style
+ * penalty rather than being ignored.
+ */
 function recruiterInterestScore(session, repeatVisits) {
   let score = 0
 
@@ -225,6 +271,7 @@ function recruiterInterestScore(session, repeatVisits) {
   const pageViews = toInt(session.page_views, 0)
   const eventsCount = toInt(session.events_count, 0)
   const org = String(session.as_org || '')
+  const { networkType } = classifyNetwork(org)
 
   if (botAvg < 35) score += 25
   else if (botAvg < 50) score += 10
@@ -245,7 +292,21 @@ function recruiterInterestScore(session, repeatVisits) {
   if (repeatVisits >= 3) score += 18
   else if (repeatVisits >= 2) score += 10
 
-  if (KNOWN_HIRING_NETWORK_PATTERN.test(org)) score += 12
+  // Only credit an employer network when the traffic did not arrive from a
+  // cloud region — otherwise the bonus rewards the crawler's host.
+  if (networkType !== 'datacenter' && networkType !== 'scraper_proxy' &&
+      KNOWN_HIRING_NETWORK_PATTERN.test(org)) {
+    score += 12
+  }
+
+  // Automated origins: heavy penalties, applied last so they cut the total.
+  if (networkType === 'scraper_proxy') score -= 55
+  else if (networkType === 'datacenter') score -= 45
+  else if (networkType === 'proxy_or_vpn') score -= 25
+
+  // A session that never scrolled did not read anything, however long the tab
+  // stayed open. This is the single strongest tell in the observed data.
+  if (scroll === 0) score -= 20
 
   return clamp(score, 0, 100)
 }
@@ -610,7 +671,7 @@ async function handleSummary(request, env) {
 
   const recentSessions = await env.DB.prepare(`
     SELECT
-      session_id, visitor_id, country, region, city, as_org,
+      session_id, visitor_id, country, region, city, asn, as_org,
       page_views, events_count, max_scroll, total_engaged_ms, bot_score_avg,
       first_seen, last_seen
     FROM sessions
@@ -630,7 +691,7 @@ async function handleSummary(request, env) {
 
   const likelyHumans = await env.DB.prepare(`
     SELECT
-      session_id, visitor_id, country, region, city, as_org,
+      session_id, visitor_id, country, region, city, asn, as_org,
       page_views, events_count, max_scroll, total_engaged_ms, bot_score_avg,
       first_seen, last_seen
     FROM sessions
@@ -642,12 +703,18 @@ async function handleSummary(request, env) {
     LIMIT 50
   `).bind(sinceTs).all()
 
-  const candidateSignals = (recentSessions.results || [])
+  const recentSessionRows = recentSessions.results || []
+  const ownerSessionsExcluded = recentSessionRows.filter(session => isOwnerSession(session, env)).length
+
+  const candidateSignals = recentSessionRows
+    .filter(session => !isOwnerSession(session, env))
     .map(session => {
       const repeatVisits = repeatMap.get(session.visitor_id) || 1
       const interestScore = recruiterInterestScore(session, repeatVisits)
+      const { networkType } = classifyNetwork(session.as_org)
       return {
         ...session,
+        network_type: networkType,
         repeat_visits: repeatVisits,
         interest_score: interestScore,
         interest_band: recruiterBand(interestScore),
@@ -664,6 +731,8 @@ async function handleSummary(request, env) {
     totals,
     botBreakdown: botBreakdown.results || [],
     topNetworks: topNetworks.results || [],
+    ownerSessionsExcluded,
+    ownerExclusionConfigured: Boolean(env?.OWNER_ASN || env?.OWNER_ORG_PATTERN),
     likelyHumanHighInterestSessions: likelyHumans.results || [],
     candidateSignals,
   })
@@ -722,7 +791,7 @@ async function handleCandidates(request, env) {
 
   const sessions = await env.DB.prepare(`
     SELECT
-      session_id, visitor_id, country, region, city, as_org,
+      session_id, visitor_id, country, region, city, asn, as_org,
       page_views, events_count, max_scroll, total_engaged_ms, bot_score_avg,
       first_seen, last_seen
     FROM sessions
@@ -740,12 +809,18 @@ async function handleCandidates(request, env) {
 
   const repeatMap = new Map((repeatVisitorRows.results || []).map(row => [row.visitor_id, toInt(row.sessions_seen, 1)]))
 
-  const candidates = (sessions.results || [])
+  const allSessions = sessions.results || []
+  const ownerSessions = allSessions.filter(session => isOwnerSession(session, env))
+
+  const candidates = allSessions
+    .filter(session => !isOwnerSession(session, env))
     .map(session => {
       const repeatVisits = repeatMap.get(session.visitor_id) || 1
       const interestScore = recruiterInterestScore(session, repeatVisits)
+      const { networkType } = classifyNetwork(session.as_org)
       return {
         ...session,
+        network_type: networkType,
         repeat_visits: repeatVisits,
         interest_score: interestScore,
         interest_band: recruiterBand(interestScore),
@@ -761,6 +836,8 @@ async function handleCandidates(request, env) {
     windowDays: days,
     limit,
     generatedAt: new Date().toISOString(),
+    ownerSessionsExcluded: ownerSessions.length,
+    ownerExclusionConfigured: Boolean(env?.OWNER_ASN || env?.OWNER_ORG_PATTERN),
     candidates,
   })
 }

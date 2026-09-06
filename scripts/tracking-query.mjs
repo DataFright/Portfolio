@@ -139,7 +139,14 @@ function pad(value, width) {
 function printRecruiterReport(data, days, limit) {
   const rows = Array.isArray(data?.candidates) ? data.candidates : []
   console.log(`Recruiter Signal Report (${days}d, top ${limit})`)
-  console.log(`Generated: ${data?.generatedAt || '-'}\n`)
+  console.log(`Generated: ${data?.generatedAt || '-'}`)
+
+  if (data?.ownerExclusionConfigured) {
+    console.log(`Owner sessions excluded: ${toNumber(data.ownerSessionsExcluded, 0)}`)
+  } else {
+    console.log('Owner exclusion NOT configured - set OWNER_ASN in wrangler.toml')
+  }
+  console.log('')
 
   if (!rows.length) {
     console.log('No candidate-like sessions found in the selected window.')
@@ -151,6 +158,7 @@ function printRecruiterReport(data, days, limit) {
     pad('human', 6),
     pad('band', 24),
     pad('org', 28),
+    pad('network', 16),
     pad('geo', 18),
     pad('engaged_s', 10),
     pad('scroll', 8),
@@ -169,6 +177,7 @@ function printRecruiterReport(data, days, limit) {
       pad(Math.round(toNumber(row.human_confidence, 0)), 6),
       pad(row.interest_band || '-', 24),
       pad((row.as_org || '-').replace(/\s+/g, ' '), 28),
+      pad(row.network_type || '-', 16),
       pad(geo, 18),
       pad(engagedSec, 10),
       pad(toNumber(row.max_scroll, 0), 8),
@@ -191,7 +200,11 @@ function printSummaryReport(data, days) {
   console.log(`Events: ${toNumber(totals.event_count, 0)}`)
   console.log(`Sessions: ${toNumber(totals.session_count, 0)}`)
   console.log(`Visitors: ${toNumber(totals.visitor_count, 0)}`)
-  console.log(`Average bot score: ${toNumber(totals.avg_bot_score, 0)}\n`)
+  console.log(`Average bot score: ${toNumber(totals.avg_bot_score, 0)}`)
+  if (data?.ownerExclusionConfigured) {
+    console.log(`Owner sessions excluded from signals: ${toNumber(data.ownerSessionsExcluded, 0)}`)
+  }
+  console.log('')
 
   if (bots.length) {
     console.log('Bot Breakdown:')
@@ -212,7 +225,7 @@ function printSummaryReport(data, days) {
   if (candidates.length) {
     console.log('Top Candidate Signals:')
     candidates.slice(0, 5).forEach(row => {
-      console.log(`- score ${toNumber(row.interest_score, 0)} | ${row.interest_band || '-'} | ${row.as_org || '-'} | ${row.country || '-'} ${row.region || '-'} | last ${shortDate(row.last_seen)} UTC`)
+      console.log(`- score ${toNumber(row.interest_score, 0)} | ${row.interest_band || '-'} | ${row.as_org || '-'} (${row.network_type || '-'}) | ${row.country || '-'} ${row.region || '-'} | last ${shortDate(row.last_seen)} UTC`)
     })
   } else {
     console.log('Top Candidate Signals: none yet')
