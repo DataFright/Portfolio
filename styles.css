@@ -8,7 +8,11 @@
   --accent-strong: #8fcbff;
   --ring: #8bc6ff36;
 
+  /* Both overridden by blueprint.js. --grid-unit shrinks below 24px so a
+     narrow laptop still gets the full desktop composition; --type-scale keeps
+     rem-based text in proportion with it, making that a true zoom. */
   --grid-unit: 24px;
+  --type-scale: 1;
   --grid-major-step: calc(var(--grid-unit) * 5);
   --radius: 0;
 
@@ -85,6 +89,12 @@
 /* -------------------------------------------------------------------------- */
 * {
   box-sizing: border-box;
+}
+
+/* Root font-size drives every rem in this file, so scaling it here scales the
+   whole type ramp with the grid unit. */
+html {
+  font-size: calc(100% * var(--type-scale));
 }
 
 body {

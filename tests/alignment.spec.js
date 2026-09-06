@@ -13,11 +13,17 @@
 // @ts-check
 import { test, expect } from '@playwright/test'
 
-const CELL = 24
+// The cell may shrink below 24px on narrow viewports (see blueprint.js), so
+// every check reads the unit the page actually laid out with.
+const BASE_CELL = 24
 const TOL  = 0.5  // sub-pixel rounding tolerance
 
+/** Live --grid-unit in px for the page under test. */
+const liveCell = page => page.evaluate(base =>
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--grid-unit')) || base,
+BASE_CELL)
+
 // ─── helpers ─────────────────────────────────────────────────────────────────
-const onGrid = v => Math.abs(v - Math.round(v / CELL) * CELL) <= TOL
 
 test.describe('Blueprint Grid Alignment', () => {
   test.beforeEach(async ({ page }) => {
@@ -67,6 +73,7 @@ test.describe('Blueprint Grid Alignment', () => {
   // ─── 2. CSS box position checks — outer edges on 24px grid ──────────────────
 
   test('all major element edges land on the 24px grid', async ({ page }) => {
+    const CELL = await liveCell(page)
     const failures = await page.evaluate((CELL) => {
       const results = []
       const check = (name, v) => {
@@ -107,6 +114,7 @@ test.describe('Blueprint Grid Alignment', () => {
   // ─── 3. Content-area alignment — inner grid starts on-grid ──────────────────
 
   test('framework content area (where fw-cards live) starts on the 24px grid', async ({ page }) => {
+    const CELL = await liveCell(page)
     const result = await page.evaluate((CELL) => {
       const fw     = document.querySelector('.framework')
       const fwCard = document.querySelector('.framework-card')
@@ -230,6 +238,7 @@ test.describe('Blueprint Grid Alignment', () => {
   // ─── 6. Vertical alignment — section heights and tops must be on-grid ────────
 
   test('section and panel heights are multiples of 24px after snapVertical()', async ({ page }) => {
+    const CELL = await liveCell(page)
     // snapVertical() is called via useLayoutEffect in App.jsx.
     // Verify both outer sections and visible nested panels at desktop width.
     const failures = await page.evaluate((CELL) => {
@@ -256,6 +265,7 @@ test.describe('Blueprint Grid Alignment', () => {
   })
 
   test('section and panel top positions are on the vertical 24px grid (at scroll=0)', async ({ page }) => {
+    const CELL = await liveCell(page)
     await page.evaluate(() => window.scrollTo(0, 0))
 
     const failures = await page.evaluate((CELL) => {

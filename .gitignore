@@ -5,3 +5,7 @@ Thumbs.db
 .env
 .env.local
 tracking.env
+
+test-results/
+playwright-report/
+.claude/

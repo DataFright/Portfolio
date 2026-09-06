@@ -14,25 +14,43 @@
  *   CSS Grid reads properties → browser renders
  *
  * Responsive model (columns switch, not styles):
- *   desktop  ≥ 56 cells wide
+ *   desktop  ≥ 58 cells wide
  *   tablet   ≥ 40 cells wide
- *   mobile   < 40 cells wide (dynamic columns with reserved side gutters)
+ *   mobile   < 36 cells wide (dynamic columns with reserved side gutters)
+ *
+ * A tier is not chosen on raw pixel width alone. The cell itself may shrink
+ * from BASE_CELL down to MIN_CELL so a tier's full column count still fits.
+ * That keeps the intended composition on screens that fall just short of the
+ * nominal width — a 1366px Chromebook renders the real desktop layout at a
+ * 23px cell instead of collapsing to the single-column tablet layout.
  */
 
 // ─── Grid constants ───────────────────────────────────────────────────────────
-export const CELL_SIZE  = 24   // px per cell — must match --grid-unit in CSS
+export const BASE_CELL  = 24   // px per cell at full size — the design baseline
+export const MIN_CELL   = 20   // smallest cell a tier may shrink to before demoting
+export const CELL_SIZE  = BASE_CELL  // back-compat alias for the baseline cell
 export const MAJOR_STEP = 5    // minor cells per major grid line
+
+/**
+ * Live cell size for the current viewport. Written by applyLayout() and read
+ * by every measurement helper, so vertical snapping uses the same unit the
+ * horizontal grid was actually laid out with.
+ */
+let cellSize = BASE_CELL
+
+/** Current cell size in px. */
+export const getCellSize = () => cellSize
 
 // ─── Math utilities ───────────────────────────────────────────────────────────
 
 /** Convert a cell count to pixels. */
-export const px = n => n * CELL_SIZE
+export const px = n => n * cellSize
 
 /** Round an arbitrary pixel value to the nearest cell boundary. */
-export const snap = v => Math.round(v / CELL_SIZE) * CELL_SIZE
+export const snap = v => Math.round(v / cellSize) * cellSize
 
 /** Snap a pixel value down (floor) to the nearest cell boundary. */
-export const snapDown = v => Math.floor(v / CELL_SIZE) * CELL_SIZE
+export const snapDown = v => Math.floor(v / cellSize) * cellSize
 
 /**
  * Return true when a placement fits within the available column count.
@@ -206,19 +224,47 @@ const SMALL_TABLET = makeSmallTablet()
 
 // ─── Breakpoint resolver ──────────────────────────────────────────────────────
 
-function resolveLayout(viewportWidth) {
-  const availCells = Math.floor(viewportWidth / CELL_SIZE)
-  if (availCells >= DESKTOP.columns)      return DESKTOP
-  if (availCells >= TABLET.columns)       return TABLET
-  if (availCells >= SMALL_TABLET.columns) return SMALL_TABLET
-  return makeMobile(availCells)
+// Widest tier first. Each is tried at progressively smaller cell sizes before
+// giving up and demoting to the next tier down.
+const TIERS = [DESKTOP, TABLET, SMALL_TABLET]
+
+/**
+ * Pick the richest layout the viewport can carry, and the cell size it needs.
+ *
+ * For each tier we compute the largest whole-pixel cell that fits the tier's
+ * full column count. If that cell is still legible (>= MIN_CELL) the tier wins;
+ * otherwise we demote. Cells never exceed BASE_CELL, so wide screens are
+ * unchanged — this only rescues widths that used to fall through the cracks.
+ *
+ * @param {number} viewportWidth
+ * @returns {{ layout: object, cell: number }}
+ */
+function resolveGeometry(viewportWidth) {
+  for (const tier of TIERS) {
+    const cell = Math.min(BASE_CELL, Math.floor(viewportWidth / tier.columns))
+    if (cell >= MIN_CELL) return { layout: tier, cell }
+  }
+  return {
+    layout: makeMobile(Math.floor(viewportWidth / BASE_CELL)),
+    cell: BASE_CELL,
+  }
 }
 
 // ─── CSS custom property writer ───────────────────────────────────────────────
 
-function applyLayout(L) {
+function applyLayout(L, cell = BASE_CELL) {
   const R   = document.documentElement
   const set = (k, v) => R.style.setProperty(k, String(v))
+
+  // Publish the live cell size before any measurement helper runs, so px() and
+  // snapDown() below resolve against the unit this layout is actually using.
+  cellSize = cell
+  set('--grid-unit', cell + 'px')
+
+  // Type scales with the grid so a shrunken cell is a true zoom of the design
+  // rather than full-size text crammed into smaller panels. rem-based sizes in
+  // styles.css inherit this through the root font-size.
+  set('--type-scale', (cell / BASE_CELL).toFixed(4))
 
   // Snap the page's left margin to a cell boundary so page columns align
   // with the background blueprint grid (which starts at viewport x=0).
@@ -364,8 +410,8 @@ export function snapVertical() {
   // Pass 2: snap leaf panels first, then the containing sections.
   nodes.forEach(el => {
     const height = el.getBoundingClientRect().height
-    const mod = height % CELL_SIZE
-    const delta = mod < 0.5 ? 0 : CELL_SIZE - mod
+    const mod = height % cellSize
+    const delta = mod < 0.5 ? 0 : cellSize - mod
     if (delta < 0.5) return
     const existing = parseFloat(getComputedStyle(el).paddingBottom) || 0
     el.style.paddingBottom = (existing + delta) + 'px'
@@ -387,7 +433,8 @@ export function initBlueprint() {
   function onResize() {
     if (layoutRaf) cancelAnimationFrame(layoutRaf)
     layoutRaf = requestAnimationFrame(() => {
-      applyLayout(resolveLayout(window.innerWidth))
+      const { layout, cell } = resolveGeometry(window.innerWidth)
+      applyLayout(layout, cell)
       snapVertical()
       if (isMobileViewport()) {
         driftState.current = 0
@@ -429,7 +476,8 @@ export function initBlueprint() {
   }
 
   // Apply synchronously on first call so CSS vars are set before first paint
-  applyLayout(resolveLayout(window.innerWidth))
+  const initial = resolveGeometry(window.innerWidth)
+  applyLayout(initial.layout, initial.cell)
   driftState.lastScrollY = window.scrollY
   document.documentElement.style.setProperty('--foreground-drift-y', '0px')
 
