@@ -96,6 +96,21 @@ Each featured project includes:
 
 This helps technical reviewers understand scope and maturity quickly.
 
+## Pages
+
+The site is five real URLs, each a normal page load (no client-side router):
+
+- `/` home, with the Fly By Mouse featured card first
+- `/fly-by-mouse` product page
+- `/support` and `/contact` (the Unity Asset Store publisher profile links to these)
+- `/privacy` plain-language data notice, kept in step with `src/tracking/`
+
+[src/routes.jsx](src/routes.jsx) maps path to page, and [vercel.json](vercel.json) serves
+`index.html` for the same paths in production. **Add a page in both places.** Site-wide facts
+(email, reply window, sheet index) live in [src/content/site.js](src/content/site.js); product facts
+in [src/content/flyByMouse.js](src/content/flyByMouse.js). All pages reuse the blueprint classes, so
+the grid snapping covers them. [tests/routes.spec.js](tests/routes.spec.js) checks every page at four widths.
+
 ## Run Locally
 
 Install and run:

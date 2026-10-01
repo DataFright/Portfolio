@@ -47,6 +47,7 @@
   --framework-card-cells: 17;
   --framework-head-cells: 30;
   --contact-label-cells: 3;
+  --feature-side-cells: 26;
   --preview-height-cells: 15;
 
   --space-1: calc(var(--grid-unit) * 1);
@@ -65,6 +66,7 @@
   --framework-card-span: calc(var(--grid-unit) * var(--framework-card-cells));
   --framework-head-span: calc(var(--grid-unit) * var(--framework-head-cells));
   --contact-label-span: calc(var(--grid-unit) * var(--contact-label-cells));
+  --feature-side-span: calc(var(--grid-unit) * var(--feature-side-cells));
   --preview-height: calc(var(--grid-unit) * var(--preview-height-cells));
 
   --page-grid-line: #8ecfff17;
@@ -642,6 +644,181 @@ h2 {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Sheet index (site navigation)                                               */
+/* -------------------------------------------------------------------------- */
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.site-nav a {
+  color: var(--accent);
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  color: var(--accent-strong);
+  opacity: 1;
+}
+
+.site-nav a + a {
+  margin-left: calc(var(--grid-unit) * 0.5);
+}
+
+.site-nav a + a::before {
+  content: '/';
+  display: inline-block;
+  margin-right: calc(var(--grid-unit) * 0.5);
+  color: var(--accent);
+  opacity: 0.6;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Featured project (home) + figure panel (product page)                       */
+/* -------------------------------------------------------------------------- */
+.featured {
+  display: grid;
+  grid-column: var(--projects-start) / span var(--projects-span-cells);
+  grid-template-columns: repeat(var(--projects-span-cells), var(--grid-unit));
+  margin-top: var(--space-2);
+}
+
+.featured > .card {
+  grid-column: 1 / -1;
+}
+
+.card--featured {
+  flex-direction: row;
+}
+
+.feature-side {
+  flex: 0 0 var(--feature-side-span);
+  min-width: 0;
+  border-right: 1px solid var(--ring);
+}
+
+.feature-main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.feature-media {
+  position: relative;
+  display: block;
+  block-size: var(--preview-height);
+  border-bottom: 1px solid var(--ring);
+  color: var(--accent-strong);
+}
+
+.card--figure .feature-media {
+  border-bottom: 0;
+}
+
+.feature-media .section-tag {
+  font-size: 0.8rem;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.aim-diagram {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.aim-diagram text {
+  fill: currentColor;
+  stroke: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.aim-diagram .aim-fig {
+  opacity: 0.55;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Content inside intro cards (support, contact, product, data notice)         */
+/* -------------------------------------------------------------------------- */
+.intro-card p + ul,
+.intro-card p + ol {
+  margin-top: var(--space-1);
+}
+
+.intro-card ul,
+.intro-card ol {
+  margin: 0;
+  padding-left: var(--space-1);
+  color: #e0efff;
+  font-size: 1.04rem;
+  line-height: 1.45;
+}
+
+.intro-card ul + p,
+.intro-card ol + p {
+  margin-top: var(--space-1);
+}
+
+.intro-card li + li {
+  margin-top: calc(var(--grid-unit) * 0.5);
+}
+
+.intro-card p a,
+.intro-card li a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.intro-card p a:hover,
+.intro-card li a:hover {
+  color: #ffffff;
+}
+
+.intro-card code,
+.framework-card code,
+.detail code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.92em;
+  color: #d5eaff;
+}
+
+/* A label column wide enough for words, for spec-sheet style rows. */
+.contact-list.spec-list li {
+  grid-template-columns: calc(var(--grid-unit) * 4) 1fr;
+}
+
+.contact-list b {
+  color: #e6f2ff;
+  font-size: 1.03rem;
+  font-weight: 400;
+}
+
+/* A long address (an email) must wrap inside its column, not push the page sideways. */
+.contact-list li {
+  grid-template-columns: var(--contact-label-span) minmax(0, 1fr);
+}
+
+.contact-list.spec-list li {
+  grid-template-columns: calc(var(--grid-unit) * 4) minmax(0, 1fr);
+}
+
+.contact-list a,
+.contact-list b {
+  overflow-wrap: anywhere;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Responsive placement — driven by blueprint.js via [data-bp] attribute     */
 /* -------------------------------------------------------------------------- */
 
@@ -668,6 +845,21 @@ h2 {
 
 [data-bp="mobile"] .framework-grid > .framework-card {
   grid-column: 1 / span var(--framework-card-cells);
+}
+
+/* Featured card stacks below desktop: media + tree on top, write-up beneath */
+[data-bp="tablet"] .card--featured,
+[data-bp="small-tablet"] .card--featured,
+[data-bp="mobile"] .card--featured {
+  flex-direction: column;
+}
+
+[data-bp="tablet"] .feature-side,
+[data-bp="small-tablet"] .feature-side,
+[data-bp="mobile"] .feature-side {
+  flex: none;
+  border-right: 0;
+  border-bottom: 1px solid var(--ring);
 }
 
 /* Visual adjustments at small sizes (not layout-affecting) */
@@ -703,6 +895,10 @@ h2 {
   .detail ul,
   .framework-card ul {
     font-size: 0.96rem;
+  }
+
+  .aim-diagram text {
+    font-size: 17px;
   }
 }
 

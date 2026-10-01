@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect } from 'react'
-import { snapVertical } from './blueprint.js'
-import { startEngagementTracking } from './tracking/visitorTracker.js'
+import PageShell, { PageHero } from './components/PageShell.jsx'
+import FeaturedProject from './components/FeaturedProject.jsx'
+import ContactList from './components/ContactList.jsx'
 
 const projects = [
   {
@@ -270,59 +270,18 @@ function ProjectCard({ project }) {
 }
 
 function App() {
-  useEffect(() => {
-    const stop = startEngagementTracking()
-    return stop
-  }, [])
-
-  useLayoutEffect(() => {
-    let resizeFrame = 0
-
-    const resnap = () => {
-      if (resizeFrame) cancelAnimationFrame(resizeFrame)
-      resizeFrame = requestAnimationFrame(() => {
-        snapVertical()
-        resizeFrame = 0
-      })
-    }
-
-    // Snap every section's height to the 24px grid so tops cascade on-grid.
-    // useLayoutEffect fires synchronously after DOM paint — ideal for layout measurement.
-    snapVertical()
-    // Re-snap after fonts finish loading (avoids measuring before web fonts render)
-    document.fonts.ready.then(snapVertical)
-
-    window.addEventListener('resize', resnap, { passive: true })
-
-    return () => {
-      window.removeEventListener('resize', resnap)
-      if (resizeFrame) cancelAnimationFrame(resizeFrame)
-    }
-  }, [])
-
   return (
-    <main className="page">
-      <aside className="left-rail" aria-label="Blueprint side notes">
-        <p className="rail-text rail-text--prod">PRODUCTION READY</p>
-        <p className="rail-text rail-text--self">_SELF TAUGHT</p>
-        <p className="rail-text rail-text--formula">d = sqrt((x_2 - x_1)^2 + (y_2 - y_1)^2)</p>
-        <p className="rail-text rail-text--circa">CIRCA2026</p>
+    <PageShell
+      title="Matthew Swaney's Portfolio"
+      rail={{ live: "PROJECT_01+02=LIVE // 03=PRE-LAUNCH" }}
+    >
+      <PageHero
+        title="Matthew Swaney"
+        sub="Self-taught engineer focused on shipping production-ready software with clear architecture, strong testing discipline, and practical delivery from MVP to scale."
+        current="/"
+      />
 
-        <div className="rail-scale" aria-hidden="true">
-          <span className="rail-scale-line" />
-          <span className="rail-scale-label">72 px</span>
-        </div>
-
-        <p className="rail-text rail-text--live">PROJECT_01+02=LIVE</p>
-      </aside>
-
-      <header className="hero">
-        <h1>Matthew Swaney</h1>
-        <p className="subhead">
-          Self-taught engineer focused on shipping production-ready apps with clear architecture,
-          strong testing discipline, and practical delivery from MVP to scale.
-        </p>
-      </header>
+      <FeaturedProject />
 
       <section className="intro-grid" aria-label="Profile">
         <article className="intro-card">
@@ -337,32 +296,15 @@ function App() {
             I design and ship practical web products with strong testing discipline, operational
             guardrails, and a clear path from MVP to scale.
           </p>
+          <p>
+            I also run DataFright, an indie startup. Its first product, Fly By Mouse, is a
+            mouse-aim flight controller for Unity, heading to the Unity Asset Store.
+          </p>
         </article>
 
         <article className="intro-card contact-card">
           <h2>Contact</h2>
-          <ul className="contact-list">
-            <li>
-              <span>Phone</span>
-              <a href="tel:+18169447474">816 944 7474</a>
-            </li>
-            <li>
-              <span>Email</span>
-              <a href="mailto:matthew.j.swaney@gmail.com">matthew.j.swaney@gmail.com</a>
-            </li>
-            <li>
-              <span>LinkedIn</span>
-              <a href="https://www.linkedin.com/in/matthew-swaney82" target="_blank" rel="noreferrer">
-                matthew-swaney82
-              </a>
-            </li>
-            <li>
-              <span>GitHub</span>
-              <a href="https://github.com/DataFright" target="_blank" rel="noreferrer">
-                github.com/DataFright
-              </a>
-            </li>
-          </ul>
+          <ContactList />
         </article>
       </section>
 
@@ -396,7 +338,7 @@ function App() {
           ))}
         </div>
       </section>
-    </main>
+    </PageShell>
   )
 }
 

@@ -122,6 +122,7 @@ function makeDesktop() {
       start: contentStart, span: contentSpan, innerSpan: frameworkInnerSpan,
       cardCells: fwCells, colStarts: [fw1, fw2, fw3],
     },
+    featured: { sideCells: 26 },
     previewH: 15,
   }
 }
@@ -154,6 +155,7 @@ function makeTablet() {
       start: contentStart, span: contentSpan, innerSpan: frameworkInnerSpan,
       cardCells: fwCells, colStarts: [fw1, fw2, fw1],
     },
+    featured: { sideCells: contentSpan },
     previewH: 12,
   }
 }
@@ -186,6 +188,7 @@ function makeSmallTablet() {
       start: contentStart, span: contentSpan, innerSpan: frameworkInnerSpan,
       cardCells: fwCells, colStarts: [fw1, fw2, fw1],
     },
+    featured: { sideCells: contentSpan },
     previewH: 10,
   }
 }
@@ -214,6 +217,7 @@ function makeMobile(availCells) {
       start: contentStart, span: contentSpan, innerSpan: Math.max(1, contentSpan - 2),
       cardCells: contentSpan, colStarts: [1, 1, 1],
     },
+    featured: { sideCells: contentSpan },
     previewH: 9,
   }
 }
@@ -309,6 +313,9 @@ function applyLayout(L, cell = BASE_CELL) {
     set(`--framework-col-${i + 1}-start`, s)
   )
 
+  // Featured card (home page): width of the media + package-tree column
+  set('--feature-side-cells', L.featured.sideCells)
+
   // Preview image height
   set('--preview-height-cells', L.previewH)
 }
@@ -396,6 +403,7 @@ export function snapVertical() {
     '.hero',
     '.intro-grid',
     '.grid',
+    '.featured',
     '.framework',
   ]
 
@@ -403,8 +411,15 @@ export function snapVertical() {
   if (!nodes.length) return
 
   // Pass 1: remove previous snap adjustments so we measure natural CSS heights.
+  // Grid items are also un-stretched for the measurement. Siblings in one grid
+  // row (framework cards, project cards) are stretched to the tallest, so
+  // padding added to one used to change the height measured for the next, and
+  // the row landed a couple of pixels off the grid. Measured at natural height,
+  // the tallest sibling snaps and the rest stretch to a row height that is
+  // already a whole number of cells.
   nodes.forEach(el => {
     el.style.removeProperty('padding-bottom')
+    el.style.alignSelf = 'start'
   })
 
   // Pass 2: snap leaf panels first, then the containing sections.
@@ -415,6 +430,11 @@ export function snapVertical() {
     if (delta < 0.5) return
     const existing = parseFloat(getComputedStyle(el).paddingBottom) || 0
     el.style.paddingBottom = (existing + delta) + 'px'
+  })
+
+  // Pass 3: hand stretch back to the stylesheet.
+  nodes.forEach(el => {
+    el.style.removeProperty('align-self')
   })
 }
 
